@@ -1,0 +1,8 @@
+.content {
+  display: inline-block;
+  width: 100vw;
+  height: calc(100vh - 96px);
+  vertical-align: top;
+  padding: 0!important;
+  overflow: hidden;
+}
