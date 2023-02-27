@@ -6,19 +6,16 @@ const Content = ({ linksData, nodesData, nodeHoverTooltip, query }) => {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    console.log("runing twice");
     let destroyFn;
 
     if (containerRef.current) {
       const { destroy } = runContentGenerator(
         containerRef.current,
         linksData,
-        nodesData,
-        nodeHoverTooltip
+        nodesData
       );
       destroyFn = destroy;
     }
-    console.log(destroyFn);
     return destroyFn;
   }, [query]);
 

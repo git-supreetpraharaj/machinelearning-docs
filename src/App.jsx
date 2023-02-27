@@ -5,10 +5,6 @@ import data from "./data/data.json";
 import { useCallback, useState } from "react";
 
 function App() {
-  const nodeHoverTooltip = useCallback((node) => {
-    return `<div>${node.name}</div>`;
-  }, []);
-
   const [query, setQuery] = useState("");
   const updateQuery = (newQuery) => {
     setQuery(newQuery);
@@ -23,7 +19,6 @@ function App() {
         <Content
           linksData={data.links}
           nodesData={data.nodes}
-          nodeHoverTooltip={nodeHoverTooltip}
           query={query}
         />
       </Row>
