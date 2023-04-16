@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { runContentGenerator } from "./ContentGenerator";
 import styles from "./content.module.css";
 
-const Content = ({ linksData, nodesData, nodeHoverTooltip, query }) => {
+const Content = ({ linksData, nodesData, query }) => {
   const containerRef = useRef(null);
 
   useEffect(() => {

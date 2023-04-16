@@ -1,8 +1,9 @@
 import "./App.css";
-import { Header, Content, Footer } from "./components";
+import { Header, Content, Footer, Page } from "./components";
 import { Container, Row } from "react-bootstrap";
 import data from "./data/data.json";
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import { Route, Routes } from "react-router-dom";
 
 function App() {
   const [query, setQuery] = useState("");
@@ -15,12 +16,20 @@ function App() {
       <Row>
         <Header query={query} updateQuery={updateQuery} />
       </Row>
-      <Row>
-        <Content
-          linksData={data.links}
-          nodesData={data.nodes}
-          query={query}
-        />
+      <Row className="main">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Content
+                linksData={data.links}
+                nodesData={data.nodes}
+                query={query}
+              />
+            }
+          />
+          <Route path="/page" element={<Page></Page>} />
+        </Routes>
       </Row>
       <Row>
         <Footer />
