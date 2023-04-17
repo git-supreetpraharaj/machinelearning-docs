@@ -14,7 +14,6 @@ export const wrap = (selection) => {
     let line = [];
     let lineNumber = 0;
     let tspan = node.text(null).append("tspan").attr("x", x).attr("y", y);
-    let numWords = -1;
 
     while (word) {
       const tspanHeight = tspan.node().getBoundingClientRect().height;

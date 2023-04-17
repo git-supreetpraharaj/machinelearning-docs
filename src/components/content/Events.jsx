@@ -1,4 +1,4 @@
-import { drag } from "d3";
+import { drag, select } from "d3";
 
 export const dragEvent = (simulation) => {
   const dragstarted = (event, d) => {
@@ -22,4 +22,18 @@ export const dragEvent = (simulation) => {
     .on("start", dragstarted)
     .on("drag", dragged)
     .on("end", dragended);
+};
+
+export const hoverEvent = (event) => {
+  const target = select(
+    event.target.nodeName === "tspan"
+      ? event.target.parentNode.parentNode
+      : event.target.parentNode
+  ).selectAll("path");
+  const state = target.style("stroke") === "black" ? "teal" : "black";
+  target.style("stroke", state);
+};
+
+export const clickEvent = (event, d, navigate) => {
+  navigate(`/page/${d.doc}`);
 };
