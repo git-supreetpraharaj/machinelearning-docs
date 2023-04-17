@@ -1,162 +1,184 @@
-import React from "react";
 import {
-  drag,
   forceSimulation,
   forceLink,
   forceManyBody,
-  forceX,
-  forceY,
   select,
   zoom,
+  forceCenter,
 } from "d3";
-import styles from "./content.module.css";
 
-export const runContentGenerator = (container, linksData, nodesData, nodeHoverTooltip) => {
-  const links = linksData.map((d) => Object.assign({}, d));
-  const nodes = nodesData.map((d) => Object.assign({}, d));
+import { rectCollide } from "./RectCollide";
+import { clickEvent, dragEvent, hoverEvent } from "./Events";
+import { rectConstruct } from "./RectConstruct";
+import { wrap } from "./TextWrap";
+
+export const runContentGenerator = (container, linksData, nodesData, navigate) => {
+  const linkData = linksData.map((d) => Object.assign({}, d));
+  const nodeData = nodesData.map((d) =>
+    Object.assign({ width: 125, height: 100 }, d)
+  );
 
   const containerRect = container.getBoundingClientRect();
   const height = containerRect.height;
   const width = containerRect.width;
 
-  const color = () => {
-    return "#9D00A0";
-  };
-
-  const icon = (d) => {
-    return d.gender === "male" ? "M" : "F";
-  };
-
-  const getClass = (d) => {
-    return d.gender === "male" ? styles.male : styles.female;
-  };
-
-  const dragEvent = (simulation) => {
-    const dragstarted = (event, d) => {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    };
-
-    const dragged = (event, d) => {
-      d.fx = event.x;
-      d.fy = event.y;
-    };
-
-    const dragended = (event, d) => {
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
-    };
-
-    return drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
-  };
-
-  const tooltip = document.querySelector("#graph-tooltip");
-  if (!tooltip) {
-    const tooltipDiv = document.createElement("div");
-    tooltipDiv.classList.add(styles.tooltip);
-    tooltipDiv.style.opacity = "0";
-    tooltipDiv.id = "graph-tooltip";
-    document.body.appendChild(tooltipDiv);
-  }
-  const div = select("#graph-tooltip");
-
-  const addTooltip = (hoverTooltip, d, x, y) => {
-    div.transition().duration(200).style("opacity", 0.9);
-    div
-      .html(hoverTooltip(d))
-      .style("left", `${x}px`)
-      .style("top", `${y - 28}px`);
-  };
-
-  const removeTooltip = () => {
-    div.transition().duration(200).style("opacity", 0);
-  };
-
-  const simulation = forceSimulation(nodes)
+  const simulation = forceSimulation()
+    .nodes(nodeData)
+    .force("center", forceCenter(width / 2, height / 2))
     .force(
       "link",
-      forceLink(links).id((d) => d.id)
+      forceLink(linkData)
+        .id((d) => d.id)
+        .distance(200)
     )
-    .force("charge", forceManyBody().strength(-150))
-    .force("x", forceX())
-    .force("y", forceY());
+    .force("collide", rectCollide())
+    .force("charge", forceManyBody().strength(-250));
 
   const svg = select(container)
     .append("svg")
-    .attr("viewBox", [-width / 2, -height / 2, width, height])
+    .attr("viewBox", [0, -10, width, height])
     .call(
       zoom().on("zoom", (event) => {
         svg.attr("transform", event.transform);
       })
     );
 
-  const link = svg
+  const defs = svg.append("defs");
+
+  const filter = defs
+    .append("filter")
+    .attr("id", "drop-shadow")
+    .attr("height", "150%");
+
+  filter
+    .append("feGaussianBlur")
+    .attr("in", "SourceAlpha")
+    .attr("stdDeviation", 5)
+    .attr("result", "blur");
+
+  const feOffset = filter
+    .append("feOffset")
+    .attr("in", "blur")
+    .attr("dx", 5)
+    .attr("dy", 5)
+    .attr("result", "offsetBlur");
+
+  const feMerge = filter.append("feMerge");
+
+  feMerge.append("feMergeNode").attr("in", "offsetBlur");
+  feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+  const nodeWidth = 150;
+  const nodeHeight = 100;
+  const nodeRadius = 5;
+  const expandButtonSize = 20;
+
+  const links = svg
     .append("g")
     .attr("stroke", "#999")
-    .attr("stroke-opacity", 0.6)
+    .attr("stroke-opacity", 1.0)
     .selectAll("line")
-    .data(links)
+    .data(linkData)
     .join("line")
     .attr("stroke-width", (d) => Math.sqrt(d.value));
 
-  const node = svg
+  const nodes = svg
     .append("g")
-    .attr("stroke", "#fff")
+    .attr("stroke", "black")
     .attr("stroke-width", 2)
-    .selectAll("circle")
-    .data(nodes)
-    .join("circle")
-    .attr("r", 12)
-    .attr("fill", color)
-    .call(dragEvent(simulation));
+    .selectAll("path")
+    .data(nodeData)
+    .join("g");
 
-  const label = svg
-    .append("g")
-    .attr("class", "labels")
-    .selectAll("text")
-    .data(nodes)
-    .enter()
+  nodes
+    .append("path")
+    .attr("d", (d) =>
+      rectConstruct(
+        -nodeWidth / 2,
+        -nodeHeight / 2,
+        nodeWidth,
+        nodeHeight / 4,
+        nodeRadius,
+        nodeRadius,
+        0,
+        0
+      )
+    )
+    .style("stroke", "black")
+    .style("fill", "white")
+    .style("filter", "url(#drop-shadow)")
+    .call(dragEvent(simulation))
+    .on("mouseover", hoverEvent)
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
+
+  nodes
+    .append("path")
+    .attr("d", (d) =>
+      rectConstruct(
+        -nodeWidth / 2,
+        -nodeHeight / 2 + nodeHeight / 4,
+        nodeWidth,
+        (3 * nodeHeight) / 4,
+        0,
+        0,
+        nodeRadius,
+        nodeRadius
+      )
+    )
+    .style("stroke", "black")
+    .style("fill", "white")
+    .style("filter", "url(#drop-shadow)")
+    .call(dragEvent(simulation))
+    .on("mouseover", hoverEvent)
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
+
+  nodes
     .append("text")
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "central")
-    .attr("class", (d) => `fa ${getClass(d)}`)
-    .text((d) => {
-      return icon(d);
-    })
-    .call(dragEvent(simulation));
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.8)
+    .attr("x", -nodeWidth / 2 + 10)
+    .attr("y", -nodeHeight / 2 + 16)
+    .attr("data-width", nodeWidth - 20)
+    .attr("data-height", nodeHeight / 4)
+    .attr("font-size", 12)
+    .style("cursor", "pointer")
+    .text(d => {
+      return d.name;
+      })
+    .call(wrap)
+    .call(dragEvent(simulation))
+    .on("mouseover", hoverEvent)
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
 
-  label
-    .on("mouseover", (event, d) => {
-      addTooltip(nodeHoverTooltip, d, event.pageX, event.pageY);
-    })
-    .on("mouseout", () => {
-      removeTooltip();
-    });
+  nodes
+    .append("text")
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5)
+    .attr("x", -nodeWidth / 2 + 10)
+    .attr("y", -nodeHeight / 4 + 20)
+    .attr("data-width", nodeWidth - 20)
+    .attr("data-height", (3 * nodeHeight) / 4 + 10)
+    .attr("font-size", 8)
+    .style("font-size", "8px")
+    .style("cursor", "pointer")
+    .text(d => d.short)
+    .call(wrap)
+    .call(dragEvent(simulation))
+    .on("mouseover", hoverEvent)
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
 
   simulation.on("tick", () => {
-    //update link positions
-    link
+    nodes.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+
+    links
       .attr("x1", (d) => d.source.x)
       .attr("y1", (d) => d.source.y)
       .attr("x2", (d) => d.target.x)
       .attr("y2", (d) => d.target.y);
-
-    // update node positions
-    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-
-    // update label positions
-    label
-      .attr("x", (d) => {
-        return d.x;
-      })
-      .attr("y", (d) => {
-        return d.y;
-      });
   });
 
   return {
