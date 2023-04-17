@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
-import { getStorage, getDownloadURL, ref } from "firebase/storage";
-import { app } from "../../firebase/FirebaseSetup";
+import { storage } from "../../firebase/FirebaseSetup";
+import { getDownloadURL, ref } from "firebase/storage";
 import axios from "axios";
 import styles from "./Page.module.css";
 import Spinner from "../spinner/Spinner";
+import { useParams } from "react-router-dom";
 
 const Page = () => {
   const [page, setPage] = useState("");
+  const { pageName } = useParams();
 
   useEffect(() => {
-    const storage = getStorage(app, "gs://ml-docs-development.appspot.com");
-    getDownloadURL(ref(storage, "lin-search.md"))
+    getDownloadURL(ref(storage, `machine-learning/${pageName}`))
       .then((url) => {
         axios({
           url: url,
@@ -30,9 +31,11 @@ const Page = () => {
       });
   }, []);
 
-  return (
-    page === ""?<Spinner/>:
-    <ReactMarkdown className={styles.page}>{page}</ReactMarkdown>);
+  return page === "" ? (
+    <Spinner />
+  ) : (
+    <ReactMarkdown className={styles.page}>{page}</ReactMarkdown>
+  );
 };
 
 export default Page;

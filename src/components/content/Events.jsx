@@ -25,7 +25,6 @@ export const dragEvent = (simulation) => {
 };
 
 export const hoverEvent = (event) => {
-  // console.log(selection)
   const target = select(
     event.target.nodeName === "tspan"
       ? event.target.parentNode.parentNode
@@ -35,7 +34,6 @@ export const hoverEvent = (event) => {
   target.style("stroke", state);
 };
 
-
-export const clickEvent = (event) => {
-  
-}
+export const clickEvent = (event, d, navigate) => {
+  navigate(`/page/${d.doc}`);
+};

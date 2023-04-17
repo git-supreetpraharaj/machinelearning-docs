@@ -8,11 +8,11 @@ import {
 } from "d3";
 
 import { rectCollide } from "./RectCollide";
-import { dragEvent, hoverEvent } from "./Events";
+import { clickEvent, dragEvent, hoverEvent } from "./Events";
 import { rectConstruct } from "./RectConstruct";
 import { wrap } from "./TextWrap";
 
-export const runContentGenerator = (container, linksData, nodesData) => {
+export const runContentGenerator = (container, linksData, nodesData, navigate) => {
   const linkData = linksData.map((d) => Object.assign({}, d));
   const nodeData = nodesData.map((d) =>
     Object.assign({ width: 125, height: 100 }, d)
@@ -32,7 +32,7 @@ export const runContentGenerator = (container, linksData, nodesData) => {
         .distance(200)
     )
     .force("collide", rectCollide())
-    .force("charge", forceManyBody().strength(-200));
+    .force("charge", forceManyBody().strength(-250));
 
   const svg = select(container)
     .append("svg")
@@ -109,7 +109,8 @@ export const runContentGenerator = (container, linksData, nodesData) => {
     .style("filter", "url(#drop-shadow)")
     .call(dragEvent(simulation))
     .on("mouseover", hoverEvent)
-    .on("mouseout", hoverEvent);
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
 
   nodes
     .append("path")
@@ -130,7 +131,8 @@ export const runContentGenerator = (container, linksData, nodesData) => {
     .style("filter", "url(#drop-shadow)")
     .call(dragEvent(simulation))
     .on("mouseover", hoverEvent)
-    .on("mouseout", hoverEvent);
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
 
   nodes
     .append("text")
@@ -141,11 +143,15 @@ export const runContentGenerator = (container, linksData, nodesData) => {
     .attr("data-width", nodeWidth - 20)
     .attr("data-height", nodeHeight / 4)
     .attr("font-size", 12)
-    .text("Machine Learning Algorithm And its uses")
+    .style("cursor", "pointer")
+    .text(d => {
+      return d.name;
+      })
     .call(wrap)
     .call(dragEvent(simulation))
     .on("mouseover", hoverEvent)
-    .on("mouseout", hoverEvent);
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
 
   nodes
     .append("text")
@@ -155,35 +161,15 @@ export const runContentGenerator = (container, linksData, nodesData) => {
     .attr("y", -nodeHeight / 4 + 20)
     .attr("data-width", nodeWidth - 20)
     .attr("data-height", (3 * nodeHeight) / 4 + 10)
-    .attr("font-size", 12)
-    .style("font-size", "12px")
-    .text(
-      "akjnsdkjnckjsndkjcn jasnd cndjanc ncajksdn ncjkand nndjksan ncajkdsn ncsdjkan njk asnkj cansk cajsnd nckas"
-    )
+    .attr("font-size", 8)
+    .style("font-size", "8px")
+    .style("cursor", "pointer")
+    .text(d => d.short)
     .call(wrap)
     .call(dragEvent(simulation))
     .on("mouseover", hoverEvent)
-    .on("mouseout", hoverEvent);
-
-  nodes
-    .append("path")
-    .attr("d", (d) =>
-      rectConstruct(
-        nodeWidth / 2 - expandButtonSize,
-        nodeHeight / 2 - expandButtonSize,
-        expandButtonSize,
-        expandButtonSize,
-        0,
-        0,
-        nodeRadius,
-        0
-      )
-    )
-    .style("stroke", "black")
-    .style("fill", "white")
-    .call(dragEvent(simulation))
-    .on("mouseover", hoverEvent)
-    .on("mouseout", hoverEvent);
+    .on("mouseout", hoverEvent)
+    .on("click", (event, d) => clickEvent(event, d, navigate));
 
   simulation.on("tick", () => {
     nodes.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
