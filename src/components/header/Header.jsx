@@ -11,7 +11,7 @@ const Header = ({ query, updateQuery }) => {
   };
 
   return (
-    <Navbar bg="light" expand="lg" bg="dark" variant="dark">
+    <Navbar expand="lg" bg="dark" variant="dark">
       <Container fluid>
         <Link className="navbar-brand" to="/">
           Machine Learning
