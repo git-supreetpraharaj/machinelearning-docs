@@ -1,40 +1,33 @@
-import "./App.css";
-import { Header, Content, Footer, Page } from "./components";
-import { Container, Row } from "react-bootstrap";
-import { useEffect, useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Outlet, Route, Routes } from 'react-router-dom';
+import './App.css';
+import MainContainer from './components/container/MainContainer';
+import Content from './components/content/Content';
+import Login from './components/page/Login';
+import Page from './components/page/Page';
+import { useState } from 'react';
+import { Container, Row } from 'react-bootstrap';
+import Footer from './components/footer/Footer';
 
 function App() {
-  const [query, setQuery] = useState("");
-  const [loadingStatus, setLoadingStatus] = useState(false);
-  const updateQuery = (newQuery) => {
-    setQuery(newQuery);
-  };
+    const [query, setQuery] = useState('');
+    const updateQuery = (newQuery) => {
+        setQuery(newQuery);
+    };
 
-  
-  return (
-    <Container className="App" fluid>
-      <Row>
-        <Header query={query} updateQuery={updateQuery} />
-      </Row>
-      <Row className="main">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Content
-                query={query}
-              />
-            }
-          />
-          <Route path="/page/:pageName" element={<Page/>} />
-        </Routes>
-      </Row>
-      <Row>
-        <Footer />
-      </Row>
-    </Container>
-  );
+    return (
+        <Container fluid>
+            <Routes>
+                <Route path="/" element={<MainContainer updateQuery={updateQuery} />}>
+                    <Route path="/" element={<Content query={query} />} />
+                    <Route path="/page/:pageName" element={<Page />} />
+                </Route>
+                <Route path="/login" element={<Login />} />
+            </Routes>
+            <Row className="footerSection fixed-bottom">
+                <Footer />
+            </Row>
+        </Container>
+    );
 }
 
 export default App;
