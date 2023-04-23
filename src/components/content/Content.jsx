@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { runContentGenerator } from './ContentGenerator';
-import styles from './Content.module.css';
+import styles from './content.module.css';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/FirebaseSetup';
 import { collection, getDocs } from 'firebase/firestore';
