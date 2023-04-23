@@ -1,19 +1,19 @@
 export const rectConstruct = (
-  x,
-  y,
-  width,
-  height,
-  topLeftRadius,
-  topRightRadius,
-  bottomRightRadius,
-  bottomLeftRadius
+    x,
+    y,
+    width,
+    height,
+    topLeftRadius,
+    topRightRadius,
+    bottomRightRadius,
+    bottomLeftRadius
 ) => {
-  const topWidth = width - topLeftRadius - topRightRadius;
-  const bottomWidth = width - bottomLeftRadius - bottomRightRadius;
-  const leftHeight = height - topLeftRadius - bottomLeftRadius;
-  const rightHeight = height - topRightRadius - bottomRightRadius;
+    const topWidth = width - topLeftRadius - topRightRadius;
+    const bottomWidth = width - bottomLeftRadius - bottomRightRadius;
+    const leftHeight = height - topLeftRadius - bottomLeftRadius;
+    const rightHeight = height - topRightRadius - bottomRightRadius;
 
-  return `
+    return `
         m ${x} ${y + topLeftRadius}
         q 0 ${-topLeftRadius} ${topLeftRadius} ${-topLeftRadius}
         h ${topWidth}

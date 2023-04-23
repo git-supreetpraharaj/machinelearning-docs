@@ -1,147 +1,147 @@
 @keyframes spin-r {
-  0%,
-  25%,
-  50%,
-  75%,
-  100% {
-    animation-timing-function: cubic-bezier(0, 1, 0, 1);
-  }
-  0% {
-    transform: scale(0.7000000000000001) rotate(180deg);
-  }
-  25% {
-    transform: scale(0.7000000000000001) rotate(270deg);
-  }
-  50% {
-    transform: scale(0.7000000000000001) rotate(360deg);
-  }
-  75% {
-    transform: scale(0.7000000000000001) rotate(450deg);
-  }
-  100% {
-    transform: scale(0.7000000000000001) rotate(540deg);
-  }
+    0%,
+    25%,
+    50%,
+    75%,
+    100% {
+        animation-timing-function: cubic-bezier(0, 1, 0, 1);
+    }
+    0% {
+        transform: scale(0.7000000000000001) rotate(180deg);
+    }
+    25% {
+        transform: scale(0.7000000000000001) rotate(270deg);
+    }
+    50% {
+        transform: scale(0.7000000000000001) rotate(360deg);
+    }
+    75% {
+        transform: scale(0.7000000000000001) rotate(450deg);
+    }
+    100% {
+        transform: scale(0.7000000000000001) rotate(540deg);
+    }
 }
 @keyframes spin-z {
-  0%,
-  50%,
-  100% {
-    animation-timing-function: cubic-bezier(1, 0, 0, 1);
-  }
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0.5);
-  }
+    0%,
+    50%,
+    100% {
+        animation-timing-function: cubic-bezier(1, 0, 0, 1);
+    }
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(0.5);
+    }
 }
 @keyframes spin-p {
-  0%,
-  50%,
-  100% {
-    animation-timing-function: cubic-bezier(1, 0, 0, 1);
-  }
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1);
-  }
+    0%,
+    50%,
+    100% {
+        animation-timing-function: cubic-bezier(1, 0, 0, 1);
+    }
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 @keyframes spin-c {
-  0%,
-  25%,
-  50%,
-  75%,
-  100% {
-    animation-timing-function: cubic-bezier(0, 1, 0, 1);
-  }
-  0% {
-    background: #e15b64;
-  }
-  25% {
-    background: #f47e60;
-  }
-  50% {
-    background: #f8b26a;
-  }
-  75% {
-    background: #abbd81;
-  }
-  100% {
-    background: #e15b64;
-  }
+    0%,
+    25%,
+    50%,
+    75%,
+    100% {
+        animation-timing-function: cubic-bezier(0, 1, 0, 1);
+    }
+    0% {
+        background: #e15b64;
+    }
+    25% {
+        background: #f47e60;
+    }
+    50% {
+        background: #f8b26a;
+    }
+    75% {
+        background: #abbd81;
+    }
+    100% {
+        background: #e15b64;
+    }
 }
 .spin > div {
-  animation: spin-r 4s linear infinite;
-  transform-origin: 25px 25px;
+    animation: spin-r 4s linear infinite;
+    transform-origin: 25px 25px;
 }
 .spin > div > div {
-  width: 50px;
-  height: 50px;
-  position: absolute;
-  animation: spin-z 1s linear infinite;
-  transform-origin: 12.5px 12.5px;
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    animation: spin-z 1s linear infinite;
+    transform-origin: 12.5px 12.5px;
 }
 .spin > div > div div {
-  position: absolute;
-  width: 25px;
-  height: 25px;
-  background: #e15b64;
-  transform-origin: 12.5px 12.5px;
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    background: #e15b64;
+    transform-origin: 12.5px 12.5px;
 }
 .spin > div > div div:nth-child(1) {
-  left: 0px;
-  top: 0px;
-  animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
+    left: 0px;
+    top: 0px;
+    animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
 }
 .spin > div > div div:nth-child(2) {
-  left: 25px;
-  top: 0px;
-  animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
+    left: 25px;
+    top: 0px;
+    animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
 }
 .spin > div > div div:nth-child(3) {
-  left: 0px;
-  top: 25px;
-  animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
+    left: 0px;
+    top: 25px;
+    animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
 }
 .spin > div > div div:nth-child(4) {
-  left: 25px;
-  top: 25px;
-  transform: scale(1);
-  animation: spin-c 4s linear infinite;
+    left: 25px;
+    top: 25px;
+    transform: scale(1);
+    animation: spin-c 4s linear infinite;
 }
 .loading-spinner {
-  width: 50px !important;
-  height: 50px;
-  display: inline-block;
-  overflow: hidden;
-  padding: 0 !important;
-  background: #ffffff;
+    width: 50px !important;
+    height: 50px;
+    display: inline-block;
+    overflow: hidden;
+    padding: 0 !important;
+    background: #ffffff;
 }
 .spin {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform: translateZ(0) scale(1);
-  backface-visibility: hidden;
-  transform-origin: 0 0; /* see note above */
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform: translateZ(0) scale(1);
+    backface-visibility: hidden;
+    transform-origin: 0 0; /* see note above */
 }
 .spin div {
-  box-sizing: content-box;
+    box-sizing: content-box;
 }
 .center {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transform: -webkit-translate(-50%, -50%);
-  transform: -moz-translate(-50%, -50%);
-  transform: -ms-translate(-50%, -50%);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transform: -webkit-translate(-50%, -50%);
+    transform: -moz-translate(-50%, -50%);
+    transform: -ms-translate(-50%, -50%);
 }

@@ -1,14 +1,27 @@
 .content {
-  display: inline-block;
-  width: 100%;
-  height: 100%;
-  vertical-align: top;
-  padding: 0 !important;
-  overflow: hidden;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    vertical-align: top;
+    padding: 0 !important;
+    overflow: hidden;
 }
 
 .content svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.editMenu {
+    position:absolute;
+    top: 70px;
+    right: 10px;
+    z-index: 1500;
+    height: 30px;
+    width: 25vw;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
 }
