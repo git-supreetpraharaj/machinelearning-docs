@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { storage } from '../../firebase/firebaseSetup';
+import { storage } from '../../firebase/FirebaseSetup';
 import { ref, uploadBytes } from 'firebase/storage';
 import axios from 'axios';
 import styles from './Page.module.css';
