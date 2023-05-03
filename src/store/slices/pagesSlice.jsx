@@ -11,7 +11,7 @@ import {
     updateDoc,
     where
 } from 'firebase/firestore';
-import { db, storage } from '../../firebase/firebaseSetup';
+import { db, storage } from '../../firebase/FirebaseSetup';
 import {
     deleteObject,
     getDownloadURL,

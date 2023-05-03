@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { auth } from '../../firebase/firebaseSetup';
+import { auth } from '../../firebase/FirebaseSetup';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const initialState = {
