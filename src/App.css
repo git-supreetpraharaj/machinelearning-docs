@@ -1,4 +1,48 @@
-.footerSection {
-    background-color: #212529;
-    color: rgba(255, 255, 255, 0.25);
+.app {
+    min-height: 100vh;
+    background: #585858;
+    background-image: radial-gradient(black 1px, transparent 0);
+    background-size: 20px 20px;
+    background-position: -19px -19px;
+    /* overflow: hidden; */
+}
+
+.header-wrapper {
+    padding: 0 !important;
+}
+
+.footer-wrapper {
+    padding: 0 !important;
+}
+
+.box {
+    background-color: blue;
+    width: 100%;
+    height: 1500px;
+}
+
+::-webkit-scrollbar-track {
+    /* -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3); */
+    border-radius: 8px;
+    background-color: #58585880;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background-color: #000000;
+    border: 2px solid #555555;
+}
+
+.content-wrapper {
+    padding: 0 !important;
+}
+
+.custom-scroll {
+    max-height: calc(100vh - 96px);
+    overflow: auto;
 }

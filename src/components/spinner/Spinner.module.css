@@ -1,147 +1,258 @@
-@keyframes spin-r {
-    0%,
-    25%,
-    50%,
-    75%,
-    100% {
-        animation-timing-function: cubic-bezier(0, 1, 0, 1);
+:root {
+    --hue-spinner: 223;
+    --bg-spinner: hsl(var(--hue-spinner), 90%, 95%);
+    --fg-spinner: hsl(var(--hue-spinner), 90%, 5%);
+}
+
+.spinnerContainer {
+    height: calc(100vh - 96px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mainSpinner {
+    padding: 1.5em 0;
+}
+
+.lp {
+    width: 8em;
+    height: 8em;
+}
+.lp__drops,
+.lp__fall-line,
+.lp__worm {
+    animation-duration: 4s;
+    animation-iteration-count: infinite;
+    transform-origin: 64px 64px;
+}
+.lp__drops {
+    animation-name: drops;
+    animation-timing-function: ease-in-out;
+    stroke-dasharray: 22 307.85 22;
+    visibility: hidden;
+    transform: rotate(90deg);
+}
+.lp__fall-line {
+    animation-name: fallLine1;
+    animation-timing-function: ease-in;
+    stroke-dasharray: 1 112;
+    stroke-dashoffset: 114;
+}
+.lp__fall-line--delay1 {
+    animation-name: fallLine2;
+}
+.lp__fall-line--delay2 {
+    animation-name: fallLine3;
+}
+.lp__fall-line--delay3 {
+    animation-name: fallLine4;
+}
+.lp__fall-line--delay4 {
+    animation-name: fallLine5;
+}
+.lp__ring {
+    stroke: hsla(var(--hue-spinner), 90%, 5%, 0.1);
+    transition: stroke 0.3s;
+}
+.lp__worm {
+    animation-name: worm;
+    stroke-dasharray: 43.98 307.87;
+    stroke-dashoffset: -131.94;
+    transform: rotate(-90deg);
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-spinner: hsl(var(--hue-spinner), 90%, 5%);
+        --fg-spinner: hsl(var(--hue-spinner), 90%, 95%);
     }
-    0% {
-        transform: scale(0.7000000000000001) rotate(180deg);
+    .lp__ring {
+        stroke: hsla(var(--hue-spinner), 90%, 95%, 0.1);
+    }
+}
+
+/* Animtions */
+@keyframes drops {
+    from {
+        animation-timing-function: steps(1, end);
+        stroke-dasharray: 0 351.85 0;
+        visibility: hidden;
     }
     25% {
-        transform: scale(0.7000000000000001) rotate(270deg);
+        animation-timing-function: ease-in-out;
+        stroke-dasharray: 0 351.85 0;
+        visibility: visible;
+    }
+    26% {
+        stroke-dasharray: 4 343.85 4;
+    }
+    27% {
+        stroke-dasharray: 8 335.85 8;
+    }
+    28% {
+        stroke-dasharray: 12 327.85 12;
+    }
+    29% {
+        animation-timing-function: ease-in;
+        stroke-dasharray: 17 317.85 17;
+    }
+    32% {
+        animation-timing-function: ease-out;
+        stroke-dasharray: 25 301.85 25;
+    }
+    35%,
+    47.5% {
+        animation-timing-function: linear;
+        stroke-dasharray: 22 307.85 22;
+        visibility: visible;
     }
     50% {
-        transform: scale(0.7000000000000001) rotate(360deg);
+        animation-timing-function: steps(1, end);
+        stroke-dasharray: 0 307.85 43.98;
+        visibility: hidden;
     }
     75% {
-        transform: scale(0.7000000000000001) rotate(450deg);
+        animation-timing-function: ease-in-out;
+        stroke-dasharray: 0 351.85 0;
+        visibility: visible;
     }
-    100% {
-        transform: scale(0.7000000000000001) rotate(540deg);
+    76% {
+        stroke-dasharray: 4 343.85 4;
     }
-}
-@keyframes spin-z {
-    0%,
-    50%,
-    100% {
-        animation-timing-function: cubic-bezier(1, 0, 0, 1);
+    77% {
+        stroke-dasharray: 8 335.85 8;
     }
-    0% {
-        transform: scale(1);
+    78% {
+        stroke-dasharray: 12 327.85 12;
     }
-    50% {
-        transform: scale(1);
+    79% {
+        animation-timing-function: ease-in;
+        stroke-dasharray: 17 317.85 17;
     }
-    100% {
-        transform: scale(0.5);
+    82% {
+        animation-timing-function: ease-out;
+        stroke-dasharray: 25 301.85 25;
     }
-}
-@keyframes spin-p {
-    0%,
-    50%,
-    100% {
-        animation-timing-function: cubic-bezier(1, 0, 0, 1);
+    85%,
+    97.5% {
+        animation-timing-function: linear;
+        stroke-dasharray: 22 307.85 22;
+        visibility: visible;
     }
-    0% {
-        transform: scale(0);
-    }
-    50% {
-        transform: scale(1);
-    }
-    100% {
-        transform: scale(1);
+    to {
+        stroke-dasharray: 43.98 307.85 0;
+        visibility: hidden;
     }
 }
-@keyframes spin-c {
-    0%,
+@keyframes fallLine1 {
+    from,
+    15% {
+        stroke-dashoffset: 114;
+    }
     25%,
-    50%,
-    75%,
-    100% {
-        animation-timing-function: cubic-bezier(0, 1, 0, 1);
+    65% {
+        stroke-dashoffset: 1;
     }
-    0% {
-        background: #e15b64;
+    75%,
+    to {
+        stroke-dashoffset: -112;
+    }
+}
+@keyframes fallLine2 {
+    from,
+    16% {
+        stroke-dashoffset: 114;
+    }
+    26%,
+    66% {
+        stroke-dashoffset: 1;
+    }
+    76%,
+    to {
+        stroke-dashoffset: -112;
+    }
+}
+@keyframes fallLine3 {
+    from,
+    17% {
+        stroke-dashoffset: 114;
+    }
+    27%,
+    67% {
+        stroke-dashoffset: 1;
+    }
+    77%,
+    to {
+        stroke-dashoffset: -112;
+    }
+}
+@keyframes fallLine4 {
+    from,
+    18% {
+        stroke-dashoffset: 114;
+    }
+    28%,
+    68% {
+        stroke-dashoffset: 1;
+    }
+    78%,
+    to {
+        stroke-dashoffset: -112;
+    }
+}
+@keyframes fallLine5 {
+    from,
+    19% {
+        stroke-dashoffset: 114;
+    }
+    29%,
+    69% {
+        stroke-dashoffset: 1;
+    }
+    79%,
+    to {
+        stroke-dashoffset: -112;
+    }
+}
+@keyframes worm {
+    from {
+        animation-timing-function: ease-out;
+        stroke-dasharray: 87.96 307.87;
+        stroke-dashoffset: -131.94;
     }
     25% {
-        background: #f47e60;
+        animation-timing-function: steps(1);
+        stroke-dasharray: 87.96 307.87;
+        stroke-dashoffset: -307.86;
+    }
+    25.01% {
+        animation-timing-function: ease-in;
+        stroke-dasharray: 43.98 307.87;
+        stroke-dashoffset: -307.86;
     }
     50% {
-        background: #f8b26a;
+        animation-timing-function: steps(1);
+        stroke-dasharray: 43.98 307.87;
+        stroke-dashoffset: -175.92;
+    }
+    50.01% {
+        animation-timing-function: ease-out;
+        stroke-dasharray: 87.96 307.87;
+        stroke-dashoffset: -131.94;
     }
     75% {
-        background: #abbd81;
+        animation-timing-function: steps(1);
+        stroke-dasharray: 87.96 307.87;
+        stroke-dashoffset: 43.98;
     }
-    100% {
-        background: #e15b64;
+    75.01% {
+        animation-timing-function: ease-in;
+        stroke-dasharray: 43.98 307.87;
+        stroke-dashoffset: 0;
     }
-}
-.spin > div {
-    animation: spin-r 4s linear infinite;
-    transform-origin: 25px 25px;
-}
-.spin > div > div {
-    width: 50px;
-    height: 50px;
-    position: absolute;
-    animation: spin-z 1s linear infinite;
-    transform-origin: 12.5px 12.5px;
-}
-.spin > div > div div {
-    position: absolute;
-    width: 25px;
-    height: 25px;
-    background: #e15b64;
-    transform-origin: 12.5px 12.5px;
-}
-.spin > div > div div:nth-child(1) {
-    left: 0px;
-    top: 0px;
-    animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
-}
-.spin > div > div div:nth-child(2) {
-    left: 25px;
-    top: 0px;
-    animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
-}
-.spin > div > div div:nth-child(3) {
-    left: 0px;
-    top: 25px;
-    animation: spin-p 1s linear infinite, spin-c 4s linear infinite;
-}
-.spin > div > div div:nth-child(4) {
-    left: 25px;
-    top: 25px;
-    transform: scale(1);
-    animation: spin-c 4s linear infinite;
-}
-.loading-spinner {
-    width: 50px !important;
-    height: 50px;
-    display: inline-block;
-    overflow: hidden;
-    padding: 0 !important;
-    background: #ffffff;
-}
-.spin {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform: translateZ(0) scale(1);
-    backface-visibility: hidden;
-    transform-origin: 0 0; /* see note above */
-}
-.spin div {
-    box-sizing: content-box;
-}
-.center {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transform: -webkit-translate(-50%, -50%);
-    transform: -moz-translate(-50%, -50%);
-    transform: -ms-translate(-50%, -50%);
+    to {
+        stroke-dasharray: 43.98 307.87;
+        stroke-dashoffset: -131.94;
+    }
 }
