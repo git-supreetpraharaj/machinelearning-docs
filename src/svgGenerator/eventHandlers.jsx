@@ -51,7 +51,11 @@ export const handleMouseoverNode = (e, isEdit) => {
     target
         .selectAll('*')
         .filter((_, index, nodes) => {
-            return nodes[index].nodeName !== 'text';
+            console.log(nodes[index].nodeName);
+            return (
+                nodes[index].nodeName !== 'text' &&
+                nodes[index].nodeName !== 'tspan'
+            );
         })
         .attr('stroke', 'cyan');
 
