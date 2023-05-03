@@ -51,12 +51,13 @@ export const handleMouseoverNode = (e, isEdit) => {
     target
         .selectAll('*')
         .filter((_, index, nodes) => {
-            console.log(nodes[index].nodeName);
             return (
-                nodes[index].nodeName !== 'text' &&
-                nodes[index].nodeName !== 'tspan'
+                nodes[index].nodeName === 'rect' ||
+                nodes[index].nodeName === 'line'
             );
         })
+        .transition()
+        .duration(200)
         .attr('stroke', 'cyan');
 
     // If the node isn't being edited as a link, scale it up
@@ -75,7 +76,17 @@ export const handleMouseoutNode = (e, isEdit) => {
     const target = select(e.currentTarget);
 
     // Reset the stroke color to black
-    target.attr('stroke', 'black');
+    target
+        .selectAll('*')
+        .filter((_, index, nodes) => {
+            return (
+                nodes[index].nodeName === 'rect' ||
+                nodes[index].nodeName === 'line'
+            );
+        })
+        .transition()
+        .duration(200)
+        .attr('stroke', 'black');
 
     // If the node isn't being edited as a link, scale it back down
     if (isEdit !== 'link')

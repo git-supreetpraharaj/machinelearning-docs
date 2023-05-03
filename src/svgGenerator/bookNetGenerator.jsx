@@ -409,9 +409,7 @@ export const runBookNetGenerator = ({
             let targetId = null;
 
             link.on('mouseover', (e) => {
-                console.log('hi');
                 if (!activeLink) {
-                    console.log('hi');
                     const target = select(e.currentTarget);
                     target.style('stroke-width', '10px');
                 }
@@ -576,7 +574,6 @@ export const runBookNetGenerator = ({
                         });
                         const newLink = { source: sourceId, target: targetId };
                         if (!contains) {
-                            console.log('Executing');
                             newLinksData.push(newLink);
                             saveNewLink({ links: newLinksData });
                             setLinks(newLinksData);
