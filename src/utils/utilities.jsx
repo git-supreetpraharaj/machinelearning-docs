@@ -1,3 +1,5 @@
+import { v5 as uuidv5 } from 'uuid';
+
 export const addPlaceholder = (type, page, startPos, endPos) => {
     let newPage = page;
     switch (type) {
@@ -172,7 +174,7 @@ export const getAgoTime = (updatedOn) => {
     const minutes = Math.floor(
         (Math.floor(Date.now() / 1000) - updatedOn.seconds) / 60
     );
-    if (isNaN(minutes)) return 'calculating...';
+    if (isNaN(minutes)) return 'now';
     if (minutes <= 1) return 'now';
     else {
         const hours = Math.floor(minutes / 60);
@@ -201,4 +203,38 @@ export const getAgoTime = (updatedOn) => {
             }
         }
     }
+};
+
+export const NAMESPACE = '1b671a64-40d5-491e-99b0-da01ff1f3341';
+
+export const getToc = (markdown) => {
+    const lines = markdown.split('\n');
+    const headers = [];
+    let isInCodeBlock = false;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.trim().startsWith('```')) {
+            isInCodeBlock = !isInCodeBlock;
+        } else if (
+            !isInCodeBlock &&
+            line.match(/^#+\s+([^#\[\]]+)(?:\[.*\]\(.*\))?$/)
+        ) {
+            const text = line
+                .match(/^#+\s+([^#\[\]]+)(?:\[.*\]\(.*\))?$/)[1]
+                .trim();
+            if (text !== '') {
+                const level = line.match(/^#+/)[0].length;
+                headers.push({ line: i + 1, text, level });
+            }
+        }
+    }
+    return headers.map((header) => {
+        const id = uuidv5(`${header.text}-${header.line}`, NAMESPACE);
+        return {
+            id: 'head-' + id,
+            line: header.line,
+            text: header.text,
+            level: header.level
+        };
+    });
 };

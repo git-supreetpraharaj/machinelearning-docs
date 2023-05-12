@@ -3,10 +3,13 @@ import './App.css';
 import Page from './components/page/Page';
 import { useState } from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
-import Footer from './components/footer/Footer';
-import Books from './components/books/Books';
-import Book from './components/book/Book';
-import Header from './components/header/Header';
+import Footer from './components/Footer';
+import Books from './components/Books';
+import Book from './components/Book';
+import Header from './components/Header';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { Tooltip } from 'react-tooltip';
 
 function App() {
     const [query, setQuery] = useState('');
@@ -16,7 +19,7 @@ function App() {
 
     return (
         <Container fluid className="d-flex flex-column h-100 p-0 app">
-            <Row className="g-0">
+            <Row className="g-0 header-wrapper">
                 <Col className="px-0">
                     <Header query={setQuery} />
                 </Col>
@@ -26,7 +29,10 @@ function App() {
                     <main className="custom-scroll">
                         <Routes>
                             <Route path="/" element={<Books />} />
-                            <Route path="/:bookId" element={<Book query={query} />} />
+                            <Route
+                                path="/:bookId"
+                                element={<Book searchQuery={query} />}
+                            />
                             <Route path="/:bookId/:pageId" element={<Page />} />
                         </Routes>
                     </main>
@@ -34,11 +40,23 @@ function App() {
             </Row>
             <Row>
                 <Col>
-                    <footer className="fixed-bottom bg-light">
+                    <footer className="fixed-bottom bg-light footer-wrapper">
                         <Footer />
                     </footer>
                 </Col>
             </Row>
+            <Tooltip id="h-tooltip" className="header-tooltip" />
+            <ToastContainer
+                position="bottom-right"
+                autoClose={2000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                theme="dark"
+            />
         </Container>
     );
 }

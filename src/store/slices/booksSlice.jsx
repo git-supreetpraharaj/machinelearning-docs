@@ -12,7 +12,13 @@ import {
     where
 } from 'firebase/firestore';
 import { db, storage } from '../../firebase/FirebaseSetup';
-import { deleteObject, getDownloadURL, getMetadata, ref, uploadBytes } from 'firebase/storage';
+import {
+    deleteObject,
+    getDownloadURL,
+    getMetadata,
+    ref,
+    uploadBytes
+} from 'firebase/storage';
 
 const initialState = {
     books: {},
@@ -55,8 +61,14 @@ const booksSlice = createSlice({
     }
 });
 
-export const { intiateProcess, fetchBooks, responseFailure, addBook, updateBook, deleteBook } =
-    booksSlice.actions;
+export const {
+    intiateProcess,
+    fetchBooks,
+    responseFailure,
+    addBook,
+    updateBook,
+    deleteBook
+} = booksSlice.actions;
 
 export default booksSlice.reducer;
 
@@ -70,23 +82,31 @@ export const fetchBooksAsync = () => async (dispatch) => {
             books[doc.id] = doc.data();
         });
         dispatch(fetchBooks(books));
+        return { type: addBook.type, payload: books };
     } catch (error) {
         dispatch(responseFailure(error.message));
+        return { type: responseFailure.type, payload: error.message };
     }
 };
 
-export const addBookAsync = (book) => async (dispatch) => {
+export const addBookAsync = (book, user) => async (dispatch) => {
     dispatch(intiateProcess());
     try {
         const booksCollectionRef = collection(db, 'books');
-        const booksQuery = query(booksCollectionRef, where('name', '==', book.name));
+        const booksQuery = query(
+            booksCollectionRef,
+            where('name', '==', book.name)
+        );
         const querySnapshot = await getDocs(booksQuery);
         if (querySnapshot.empty) {
             const newBook = {
                 name: book.name,
                 shortDesc: book.shortDesc,
                 cover: null,
+                author: { uid: user.uid, name: user.displayName },
+                private: book.private ?? true,
                 links: [],
+                references: [],
                 createdOn: serverTimestamp(),
                 updatedOn: serverTimestamp()
             };
@@ -94,9 +114,9 @@ export const addBookAsync = (book) => async (dispatch) => {
             const docRef = await addDoc(booksCollectionRef, newBook);
 
             if (book.image) {
-                const uploadImageName = `books-cover/${docRef.id}.${book.image.name
-                    .split('.')
-                    .pop()}`;
+                const uploadImageName = `books-cover/${
+                    docRef.id
+                }.${book.image.name.split('.').pop()}`;
                 const imageStorageRef = ref(storage, uploadImageName);
                 await uploadBytes(imageStorageRef, book.image);
                 newBook.cover = await getDownloadURL(imageStorageRef);
@@ -117,27 +137,52 @@ export const addBookAsync = (book) => async (dispatch) => {
 
 export const updateBookAsync = (bookId, updatedFields) => async (dispatch) => {
     dispatch(intiateProcess());
-    console.log('ud', bookId, updatedFields);
     try {
-        const bookDocRef = doc(db, 'books', bookId);
+        const booksCollectionRef = collection(db, 'books');
+        const bookDocRef = doc(booksCollectionRef, bookId);
         const bookDoc = await getDoc(bookDocRef);
         if (bookDoc.exists()) {
             const currentBook = bookDoc.data();
 
+            if (updatedFields.name && updatedFields.name !== currentBook.name) {
+                const booksQuery = query(
+                    booksCollectionRef,
+                    where('name', '==', updatedFields.name)
+                );
+                const querySnapshot = await getDocs(booksQuery);
+                if (!querySnapshot.empty) {
+                    throw new Error(
+                        `Book with name ${updatedFields.name} already exists.`
+                    );
+                }
+            }
             const updatedBook = Object.assign({}, currentBook, {
                 name: updatedFields.name ?? currentBook.name,
                 shortDesc: updatedFields.shortDesc ?? currentBook.shortDesc,
+                private: updatedFields.private ?? currentBook.private,
                 links: updatedFields.links ?? currentBook.links,
+                references: updatedFields.references ?? currentBook.references,
                 updatedOn: serverTimestamp()
             });
-
-            if (updatedFields.image) {
-                const uploadImageName = `books-cover/${bookId}.${updatedFields.image.name
-                    .split('.')
-                    .pop()}`;
-                const imageStorageRef = ref(storage, uploadImageName);
-                await uploadBytes(imageStorageRef, updatedFields.image);
-                updatedBook.cover = await getDownloadURL(imageStorageRef);
+            if ('image' in updatedFields) {
+                if (updatedFields.image) {
+                    if (typeof updatedFields.image === 'object') {
+                        const uploadImageName = `books-cover/${bookId}.${updatedFields.image.name
+                            .split('.')
+                            .pop()}`;
+                        const imageStorageRef = ref(storage, uploadImageName);
+                        await uploadBytes(imageStorageRef, updatedFields.image);
+                        updatedBook.cover = await getDownloadURL(
+                            imageStorageRef
+                        );
+                    }
+                } else {
+                    if (currentBook.cover) {
+                        const imageStorageRef = ref(storage, currentBook.cover);
+                        await deleteObject(imageStorageRef);
+                        updatedBook.cover = null;
+                    }
+                }
             }
             await updateDoc(bookDocRef, updatedBook);
             updatedBook.id = bookId;
@@ -156,21 +201,22 @@ export const deleteBookAsync = (bookId) => async (dispatch) => {
     dispatch(intiateProcess());
     try {
         const bookDocRef = doc(db, 'books', bookId);
-        const coverImageRef = ref(storage, `books-cover/${bookId}`);
         const bookDoc = await getDoc(bookDocRef);
         if (bookDoc.exists()) {
             const deletedBook = { ...bookDoc.data() };
-            const fileExists = await getMetadata(coverImageRef)
-                .then(() => true)
-                .catch((error) => {
-                    if (error.code === 'storage/object-not-found') {
-                        return false;
-                    }
-                    throw error;
-                });
-
-            if (fileExists) {
-                await deleteObject(coverImageRef);
+            if (deletedBook.cover !== null) {
+                const coverImageRef = ref(storage, deletedBook.cover);
+                const fileExists = await getMetadata(coverImageRef)
+                    .then(() => true)
+                    .catch((error) => {
+                        if (error.code === 'storage/object-not-found') {
+                            return false;
+                        }
+                        throw error;
+                    });
+                if (fileExists) {
+                    await deleteObject(coverImageRef);
+                }
             }
             await deleteDoc(bookDocRef);
             dispatch(deleteBook(bookId));

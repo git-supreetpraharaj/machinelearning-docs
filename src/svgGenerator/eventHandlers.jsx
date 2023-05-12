@@ -173,23 +173,23 @@ let selectedNode = null;
  * @param {Array} nodes - The array of nodes in the graph.
  * @param {Function} setSelectedId - The function to set the selected node ID.
  * @param {Function} setSelectedPage - The function to set the selected page.
- * @param {Function} handleUpdateBookShow - The function to handle updating
+ * @param {Function} handleUpdatePageShow - The function to handle updating
  *                                          the book data.
- * @param {Function} handleDeleteBookShow - The function to handle
+ * @param {Function} handleDeletePageShow - The function to handle
  *                                           deleting the book data.
  * @param {Function} navigate - The function to navigate to a new page.
  */
-export const handleNodeClicked = (
+export const handleNodeClicked = ({
     e,
     d,
     styles,
     nodes,
     setSelectedId,
     setSelectedPage,
-    handleUpdateBookShow,
-    handleDeleteBookShow,
+    handleUpdatePageShow,
+    handleDeletePageShow,
     navigate
-) => {
+}) => {
     let clickedNode = select(e.target).node();
     while (
         clickedNode &&
@@ -251,7 +251,7 @@ export const handleNodeClicked = (
                                     nodes,
                                     setSelectedPage,
                                     setSelectedId,
-                                    handleUpdateBookShow
+                                    handleUpdatePageShow
                                 )
                             }>
                             <MdEdit size={20} color="#24a0ed" />
@@ -270,7 +270,7 @@ export const handleNodeClicked = (
                                     nodes,
                                     setSelectedPage,
                                     setSelectedId,
-                                    handleDeleteBookShow
+                                    handleDeletePageShow
                                 )
                             }>
                             <MdOutlineDelete size={20} color="#c70000" />

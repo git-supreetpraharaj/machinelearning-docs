@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
+import { Button, Form, Modal, Spinner } from 'react-bootstrap';
+import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
 import {
     responseFailure,
     updateBookAsync
 } from '../../store/slices/booksSlice';
-import * as Yup from 'yup';
-import noPreviewImage from '../../assets/No Preview New.png';
-import styles from './Form.module.css';
-import { Button, Form, Modal, Image, Spinner, Alert } from 'react-bootstrap';
-import { Field, Formik } from 'formik';
+import { Formik } from 'formik';
+import { MdClose } from 'react-icons/md';
+import { toast } from 'react-toastify';
+import ImageDropzone from './fields/ImageDropzone';
+import NameField from './fields/NameField';
+import DescriptionField from './fields/DescriptionField';
+import styles from '../styles/Form.module.css';
 
 const UpdateBook = ({
     show,
@@ -19,38 +23,41 @@ const UpdateBook = ({
     setSelectedBook
 }) => {
     const dispatch = useDispatch();
-    const [error, setError] = useState('');
 
     const handleClose = () => {
-        setError('');
         setSelectedBook(null);
         setSelectedId(null);
         setShow(false);
     };
 
     const handleSubmit = (values, { setSubmitting }) => {
-        const updateBook = {
-            name: values.name,
-            shortDesc: values.shortDesc,
-            image: values.image
-        };
-
-        dispatch(updateBookAsync(bookId, updateBook))
-            .then((result) => {
-                if (result.type === responseFailure.type) {
-                    setError(result.payload);
-                } else {
-                    handleClose();
-                }
-            })
-            .finally(() => {
-                setSubmitting(false);
-            });
-    };
-
-    const handleFileInputChange = (event, setFieldValue) => {
-        const file = event.target.files[0];
-        setFieldValue('image', file);
+        if (
+            book.name === values.name &&
+            book.shortDesc === values.shortDesc &&
+            book.cover === values.image
+        ) {
+            handleClose();
+            return;
+        } else {
+            const updatedBook = Object.assign({}, book);
+            updatedBook.name = values.name;
+            updatedBook.shortDesc = values.shortDesc;
+            updatedBook.image = values.image;
+            dispatch(updateBookAsync(bookId, updatedBook))
+                .then((result) => {
+                    if (result.type === responseFailure.type) {
+                        toast.error(result.payload);
+                    } else {
+                        toast.success(
+                            `${result.payload.name} is updated successfully`
+                        );
+                        handleClose();
+                    }
+                })
+                .finally(() => {
+                    setSubmitting(false);
+                });
+        }
     };
 
     const validationSchema = Yup.object().shape({
@@ -68,123 +75,81 @@ const UpdateBook = ({
     const initialValues = {
         name: book.name,
         shortDesc: book.shortDesc,
-        image: null
+        image: book.cover
     };
 
     return (
-        <Modal show={show} onHide={handleClose} centered>
-            <Modal.Header closeButton>
+        <Modal
+            contentClassName={styles.formModal}
+            // size="lg"
+            show={show}
+            onHide={handleClose}
+            centered>
+            <Modal.Header className={styles.modalHeader}>
                 <Modal.Title>
-                    Update Book <strong>{book.name}</strong>
+                    Update <strong>{book.name}</strong>
                 </Modal.Title>
+                <Button variant="dark" size="sm" onClick={handleClose}>
+                    <MdClose size={24} />
+                </Button>
             </Modal.Header>
-            <Modal.Body>
-                <Formik
-                    initialValues={initialValues}
-                    validationSchema={validationSchema}
-                    onSubmit={handleSubmit}>
-                    {({
-                        handleSubmit,
-                        handleChange,
-                        touched,
-                        values,
-                        errors,
-                        setFieldValue,
-                        isSubmitting
-                    }) => (
-                        <Form noValidate onSubmit={handleSubmit}>
-                            <Form.Group
-                                className="mb-3"
-                                controlId="updateBookForm.bookName">
-                                <Form.Label>Book Name</Form.Label>
-                                <Form.Control
-                                    as={Field}
-                                    type="text"
-                                    name="name"
-                                    value={values.name}
-                                    onChange={handleChange}
-                                    placeholder="Enter Book Name"
-                                    isInvalid={errors.name && touched.name}
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors.name && touched.name && errors.name}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <Form.Group
-                                className="mb-3"
-                                controlId="updateBookForm.shortDesc">
-                                <Form.Label>Description</Form.Label>
-                                <Form.Control
-                                    as={Field}
-                                    component="textarea"
-                                    name="shortDesc"
-                                    value={values.shortDesc}
-                                    onChange={handleChange}
-                                    placeholder="Enter Short Description"
-                                    isInvalid={
-                                        errors.shortDesc && touched.shortDesc
-                                    }
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors.shortDesc &&
-                                        touched.shortDesc &&
-                                        errors.shortDesc}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <Form.Group controlId="updateBookForm.image">
-                                <Form.Label>Update cover image</Form.Label>
-                                <Form.Control
-                                    type="file"
-                                    name="image"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        handleFileInputChange(e, setFieldValue);
-                                    }}
-                                    isInvalid={errors.image && touched.image}
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors.image &&
-                                        touched.image &&
-                                        errors.image}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <div className={styles.preview}>
-                                Preview Cover Image
-                                <Image
-                                    src={
-                                        values.image
-                                            ? URL.createObjectURL(values.image)
-                                            : book?.cover ?? noPreviewImage
-                                    }
-                                    alt={
-                                        values.image
-                                            ? values.image.name
-                                            : 'No Image'
-                                    }
-                                    className={styles.previewImage}
-                                />
-                            </div>
 
-                            <Modal.Footer className="d-flex justify-content-center flex-column">
-                                <Button
-                                    variant="primary"
-                                    type="submit"
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting}>
-                                    {isSubmitting ? (
-                                        <Spinner animation="border" size="sm" />
-                                    ) : (
-                                        'Update'
-                                    )}
-                                </Button>
-                                {error && (
-                                    <Alert variant="danger">{error}</Alert>
+            <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}>
+                {({
+                    handleSubmit,
+                    handleChange,
+                    touched,
+                    values,
+                    errors,
+                    setFieldValue,
+                    isSubmitting
+                }) => (
+                    <Form noValidate onSubmit={handleSubmit}>
+                        <Modal.Body>
+                            <ImageDropzone
+                                label="Cover Image"
+                                values={values}
+                                field="image"
+                                setFieldValue={setFieldValue}
+                            />
+                            <NameField
+                                label="Book Name"
+                                placeholder="Enter Book Name"
+                                values={values}
+                                errors={errors}
+                                touched={touched}
+                                handleChange={handleChange}
+                            />
+                            <DescriptionField
+                                label="Description"
+                                placeholder="Enter a short description"
+                                values={values}
+                                errors={errors}
+                                touched={touched}
+                                handleChange={handleChange}
+                            />
+                        </Modal.Body>
+                        <Modal.Footer
+                            className={`${styles.modalFooter} justify-content-center`}>
+                            <Button
+                                className={styles.formBtn}
+                                variant="success"
+                                type="submit"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <Spinner animation="border" size="sm" />
+                                ) : (
+                                    'Update'
                                 )}
-                            </Modal.Footer>
-                        </Form>
-                    )}
-                </Formik>
-            </Modal.Body>
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                )}
+            </Formik>
         </Modal>
     );
 };

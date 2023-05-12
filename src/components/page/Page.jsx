@@ -1,37 +1,45 @@
 import { useEffect, useState, useRef } from 'react';
-import { storage } from '../../firebase/FirebaseSetup';
+import { db, storage } from '../../firebase/FirebaseSetup';
 import { ref, uploadBytes } from 'firebase/storage';
 import axios from 'axios';
-import styles from './Page.module.css';
-import Spinner from '../spinner/Spinner';
+import Spinner from '../Spinner';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import PageHeader from './PageHeader';
-import { Col, Container, Row } from 'react-bootstrap';
-import { addPlaceholder } from '../../utils/utilities';
+import { Nav } from 'react-bootstrap';
+import { addPlaceholder, getToc } from '../../utils/utilities';
 import DOMPurify from 'dompurify';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import styles from '../styles/Page.module.css';
+import './Page.css';
+import { BsCaretRightFill } from 'react-icons/bs';
+import { toast } from 'react-toastify';
+import { doc, getDoc } from 'firebase/firestore';
 
 const Page = () => {
+    const [originalMarkdown, setOriginalMarkdown] = useState('');
     const [markdown, setMarkdown] = useState('');
     const [searchParams] = useSearchParams();
     const [editable, setEditable] = useState(
         searchParams.get('view') === 'edit'
     );
     const { bookId, pageId } = useParams();
-    const { user, pageData } = useSelector((state) => {
+    const { user, pages } = useSelector((state) => {
         const user = state.auth.user;
         const pages = state.pages.pages;
-        const pageD = pages.find((page) => page.id === pageId);
-        return { user: user, pageData: pageD };
+        return { user: user, pages: pages };
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [pageData, setPageData] = useState(null);
+    const [toc, setToc] = useState([]);
     const editorRef = useRef(null);
     const previewRef = useRef(null);
+    const tocRef = useRef(null);
+    const observerRef = useRef(null);
 
     const handleButtonsClick = (type) => {
         if (!editorRef.current) {
@@ -47,16 +55,23 @@ const Page = () => {
 
     const handleUpload = () => {
         setIsSaving(true);
-        const fileRef = ref(storage, `${bookId}/${pageId}.md`);
-        const metadata = { contentType: 'text/markdown' };
-        const blob = new Blob([markdown], { type: 'text/markdown' });
-        uploadBytes(fileRef, blob, metadata)
-            .then(() => {
-                console.log('updated successfully');
-            })
-            .catch((error) => {
-                console.log('Error updating file in storage: ', error);
-            });
+        if (markdown !== originalMarkdown) {
+            const fileRef = ref(storage, `${bookId}/${pageId}.md`);
+            const metadata = { contentType: 'text/markdown' };
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            uploadBytes(fileRef, blob, metadata)
+                .then(() => {
+                    toast.success(`${pageData.name} updated successfully`);
+                    setOriginalMarkdown(markdown);
+                    setToc(getToc(markdown));
+                })
+                .catch((error) => {
+                    toast.error('Unable to update. Error: ' + error.message);
+                })
+                .finally(setIsSaving(false));
+        } else {
+            setIsSaving(false);
+        }
     };
 
     const handleEditorScroll = () => {
@@ -92,7 +107,7 @@ const Page = () => {
         }
     };
 
-    function handleKeyDown(event) {
+    const handleKeyDown = (event) => {
         if (event.key === 'Tab' && !event.ctrlKey) {
             event.preventDefault();
             // Insert two spaces at the current cursor position
@@ -101,24 +116,76 @@ const Page = () => {
             setMarkdown(
                 markdown.substring(0, start) + '\t' + markdown.substring(end)
             );
-            // Move the cursor two spaces to the right
             event.target.setSelectionRange(start + 1, start + 1);
         }
-    }
+    };
+
+    const scrollToSection = (id) => {
+        const section = document.getElementById(id);
+        section.scrollIntoView({ behavior: 'smooth' });
+    };
 
     useEffect(() => {
-        if (pageData && pageData.mdUrl) {
+        const bookRef = doc(db, 'books', bookId);
+        const pageRef = doc(bookRef, 'pages', pageId);
+        getDoc(pageRef).then((pageSnapshot) => {
+            const page = pageSnapshot.data();
             axios
-                .get(pageData.mdUrl, { responseType: 'text' })
+                .get(page.mdUrl, { responseType: 'text' })
                 .then((res) => {
-                    console.log(res);
+                    setPageData(page);
                     setMarkdown(res?.data.replaceAll('\r', ''));
+                    setOriginalMarkdown(res?.data.replaceAll('\r', ''));
+                    setToc(getToc(res?.data.replaceAll('\r', '')));
                 })
                 .catch((error) => {
-                    console.log(error);
+                    toast.error(error.message);
                 });
-        }
-    }, [pageData]);
+        });
+    }, []);
+
+    useEffect(() => {
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const ele = tocRef.current.querySelectorAll(
+                            `#${entry.target.id}-toc`
+                        );
+                        ele[0].classList.add(styles.activeToc);
+                    } else {
+                        const ele = tocRef.current.querySelectorAll(
+                            `#${entry.target.id}-toc`
+                        );
+                        ele[0].classList.remove(styles.activeToc);
+                    }
+                });
+            },
+            {
+                root: previewRef.current,
+                rootMargin: '0% 0px 0% 0px',
+                threshold: 1
+            }
+        );
+    }, []);
+
+    useEffect(() => {
+        if (!toc.length || !previewRef.current || !tocRef.current) return;
+        const headerIds = toc.map((header) => `#${header.id}`);
+
+        const headers = previewRef.current.querySelectorAll(
+            headerIds.join(', ')
+        );
+
+        headers.forEach((header) => {
+            observerRef.current.observe(header);
+        });
+
+        return () => {
+            headers.forEach((header) => observerRef.current.unobserve(header));
+            observerRef.current.disconnect();
+        };
+    }, [toc, editable]);
 
     return markdown === '' ? (
         <Spinner />
@@ -134,71 +201,166 @@ const Page = () => {
                 handleUpload={handleUpload}
             />
 
-            <div className={styles.content}>
-                <Container className={styles.pageContainer} fluid>
-                    <Row className={styles.pageRow}>
-                        {editable ? (
-                            <Col>
-                                <textarea
-                                    ref={editorRef}
-                                    className={styles.editor}
-                                    value={markdown}
-                                    onChange={(e) => {
-                                        setMarkdown(e.target.value);
-                                    }}
-                                    onScroll={handleEditorScroll}
-                                    onKeyDown={handleKeyDown}
-                                />
-                            </Col>
-                        ) : (
-                            <></>
-                        )}
-                        <Col>
-                            <div
-                                ref={previewRef}
-                                className={styles.previewContainer}
-                                onScroll={handlePreviewScroll}>
-                                <ReactMarkdown
-                                    className={styles.preview}
-                                    escapeHtml={false}
-                                    remarkPlugins={[remarkGfm]}
-                                    rehypePlugins={[rehypeRaw]}
-                                    children={DOMPurify.sanitize(markdown)}
-                                    components={{
-                                        code({
-                                            node,
-                                            inline,
-                                            className,
-                                            children,
-                                            ...props
-                                        }) {
-                                            const match = /language-(\w+)/.exec(
-                                                className || ''
-                                            );
-                                            return !inline && match ? (
-                                                <SyntaxHighlighter
-                                                    {...props}
-                                                    children={String(
-                                                        children
-                                                    ).replace(/\n$/, '')}
-                                                    style={okaidia}
-                                                    language={match[1]}
-                                                    PreTag="div"
-                                                />
-                                            ) : (
-                                                <code
-                                                    {...props}
-                                                    className={className}>
-                                                    {children}
-                                                </code>
-                                            );
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </Col>
-                    </Row>
-                </Container>
+            <div className={styles.content} ref={editorRef}>
+                {editable ? (
+                    <textarea
+                        className={styles.editor}
+                        value={markdown}
+                        onChange={(e) => {
+                            setMarkdown(e.target.value);
+                        }}
+                        onScroll={handleEditorScroll}
+                        onKeyDown={handleKeyDown}
+                    />
+                ) : (
+                    <div className={styles.toc}>
+                        <div className={`${styles.tocList}`}>
+                            <Nav ref={tocRef} className={styles.tocNav}>
+                                {toc.map(({ id, line, text, level }) => (
+                                    <Nav.Link
+                                        key={id}
+                                        id={`${id}-toc`}
+                                        level={level}
+                                        className={styles.tocLink}
+                                        style={{
+                                            paddingLeft: `${level * 20}px`
+                                        }}
+                                        onClick={() => {
+                                            scrollToSection(id);
+                                        }}>
+                                        <BsCaretRightFill className="me-3" />
+                                        {text}
+                                    </Nav.Link>
+                                ))}
+                            </Nav>
+                        </div>
+                    </div>
+                )}
+                <div
+                    ref={previewRef}
+                    className={styles.previewContainer}
+                    onScroll={handlePreviewScroll}>
+                    <ReactMarkdown
+                        className={styles.preview}
+                        escapeHtml={false}
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw]}
+                        children={DOMPurify.sanitize(markdown)}
+                        components={{
+                            code({
+                                node,
+                                inline,
+                                className,
+                                children,
+                                ...props
+                            }) {
+                                const match = /language-(\w+)/.exec(
+                                    className || ''
+                                );
+                                return !inline && match ? (
+                                    <SyntaxHighlighter
+                                        {...props}
+                                        children={String(children).replace(
+                                            /\n$/,
+                                            ''
+                                        )}
+                                        style={okaidia}
+                                        language={match[1]}
+                                        PreTag="div"
+                                    />
+                                ) : (
+                                    <code {...props} className={className}>
+                                        {children}
+                                    </code>
+                                );
+                            },
+                            h1({ node, children, ...props }) {
+                                const header = toc.find((header) => {
+                                    return (
+                                        header.line ===
+                                            node.position.start.line &&
+                                        header.text === children[0]
+                                    );
+                                });
+                                return (
+                                    <h1 {...props} id={header?.id}>
+                                        {children}
+                                    </h1>
+                                );
+                            },
+                            h2({ node, children, ...props }) {
+                                const header = toc.find((header) => {
+                                    return (
+                                        header.line ===
+                                            node.position.start.line &&
+                                        header.text === children[0]
+                                    );
+                                });
+                                return (
+                                    <h2 {...props} id={header?.id}>
+                                        {children}
+                                    </h2>
+                                );
+                            },
+                            h3({ node, children, ...props }) {
+                                const header = toc.find((header) => {
+                                    return (
+                                        header.line ===
+                                            node.position.start.line &&
+                                        header.text === children[0]
+                                    );
+                                });
+                                return (
+                                    <h3 {...props} id={header?.id}>
+                                        {children}
+                                    </h3>
+                                );
+                            },
+                            h4({ node, children, ...props }) {
+                                const header = toc.find((header) => {
+                                    return (
+                                        header.line ===
+                                            node.position.start.line &&
+                                        header.text === children[0]
+                                    );
+                                });
+                                return (
+                                    <h4 {...props} id={header?.id}>
+                                        {children}
+                                    </h4>
+                                );
+                            },
+                            h5({ node, children, ...props }) {
+                                const header = toc.find((header) => {
+                                    return (
+                                        header.line ===
+                                            node.position.start.line &&
+                                        header.text === children[0]
+                                    );
+                                });
+                                return (
+                                    <h5 {...props} id={header?.id}>
+                                        {children}
+                                    </h5>
+                                );
+                            },
+                            h6({ node, children, ...props }) {
+                                const header = toc.find((header) => {
+                                    return (
+                                        header.line ===
+                                            node.position.start.line &&
+                                        header.text === children[0]
+                                    );
+                                });
+                                return (
+                                    <h6 {...props} id={header?.id}>
+                                        {children}
+                                    </h6>
+                                );
+                            }
+                        }}
+                    />
+                </div>
             </div>
         </div>
     );

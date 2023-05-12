@@ -8,11 +8,13 @@
 }
 
 .header-wrapper {
-    padding: 0 !important;
+    filter: drop-shadow(0px 4px 7px #000);
+    z-index: 1;
 }
 
 .footer-wrapper {
-    padding: 0 !important;
+    filter: drop-shadow(0px -4px 7px #000);
+    z-index: 1;
 }
 
 .box {
@@ -29,6 +31,7 @@
 
 ::-webkit-scrollbar {
     width: 10px;
+    height: 10px;
     background-color: transparent;
 }
 
@@ -45,4 +48,19 @@
 .custom-scroll {
     max-height: calc(100vh - 96px);
     overflow: auto;
+}
+
+.header-tooltip {
+    visibility: hidden;
+    width: max-content !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 90%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    will-change: opacity, visibility;
 }

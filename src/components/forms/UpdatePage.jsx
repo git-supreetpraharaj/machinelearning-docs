@@ -4,7 +4,14 @@ import {
     responseFailure,
     updatePageAsync
 } from '../../store/slices/pagesSlice';
-import { Alert, Button, Form, Modal, Spinner } from 'react-bootstrap';
+import { Button, Form, Modal, Spinner } from 'react-bootstrap';
+import { toast } from 'react-toastify';
+import NameField from './fields/NameField';
+import DescriptionField from './fields/DescriptionField';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import styles from '../styles/Form.module.css';
+import { MdClose } from 'react-icons/md';
 
 const UpdatePage = ({
     show,
@@ -16,101 +23,117 @@ const UpdatePage = ({
     setSelectedPage
 }) => {
     const dispatch = useDispatch();
-    const formRef = useRef(null);
-    const [isLoading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [name, setName] = useState(page.name);
-    const [shortDesc, setShortDesc] = useState(page.shortDesc);
 
     const handleClose = () => {
-        setLoading(false);
-        setError('');
         setSelectedPage(null);
         setSelectedId(null);
         setShow(false);
     };
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
+    const handleSubmit = (values, { setSubmitting }) => {
+        if (page.name === values.name && page.shortDesc === values.shortDesc) {
+            handleClose();
+            return;
+        } else {
+            const updatedPage = Object.assign({}, page);
+            updatedPage.name = values.name;
+            updatedPage.shortDesc = values.shortDesc;
+            dispatch(updatePageAsync(bookId, pageId, updatedPage))
+                .then((result) => {
+                    if (result.type === responseFailure.type) {
+                        toast.error(result.payload);
+                    } else {
+                        toast.success(
+                            `${result.payload.name} is updated successfully`
+                        );
+                        handleClose();
+                    }
+                })
+                .finally(() => {
+                    setSubmitting(false);
+                });
+        }
+    };
 
-        setLoading(true);
-        const formData = new FormData(formRef.current);
-        const pageName = formData.get('name');
-        const shortDesc = formData.get('shortDesc');
+    const validationSchema = Yup.object().shape({
+        name: Yup.string()
+            .min(5, 'Name must be at least 5 characters')
+            .matches(
+                /^[\w\s'"-]+$/,
+                'Name can only contain letters, numbers, underscores, hyphens, single quotes, double quotes and spaces'
+            )
+            .required('Name is required'),
+        description: Yup.string().notRequired()
+    });
 
-        const updatePage = {
-            name: pageName,
-            shortDesc: shortDesc
-        };
-
-        dispatch(updatePageAsync(bookId, pageId, updatePage))
-            .then((result) => {
-                if (result.type === responseFailure.type) {
-                    setError(result.payload);
-                } else {
-                    handleClose();
-                }
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+    const initialValues = {
+        name: page.name,
+        shortDesc: page.shortDesc
     };
 
     return (
-        <Modal show={show} onHide={handleClose} centered>
-            <Modal.Header closeButton>
+        <Modal
+            contentClassName={styles.formModal}
+            show={show}
+            onHide={handleClose}
+            centered>
+            <Modal.Header className={styles.modalHeader}>
                 <Modal.Title>
-                    Update Page <strong>{page.name}</strong>
+                    Update <strong>{page.name}</strong>
                 </Modal.Title>
+                <Button variant="dark" size="sm" onClick={handleClose}>
+                    <MdClose size={24} />
+                </Button>
             </Modal.Header>
-            <Modal.Body>
-                <Form ref={formRef} onSubmit={handleSubmit}>
-                    <Form.Group
-                        className="mb-3"
-                        controlId="updatePageForm.pageName">
-                        <Form.Label>Name</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="name"
-                            placeholder="Enter Page Name"
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                            }}
-                        />
-                    </Form.Group>
-
-                    <Form.Group
-                        className="mb-3"
-                        controlId="updatePageForm.shortDesc">
-                        <Form.Label>Short Description</Form.Label>
-                        <Form.Control
-                            as="textarea"
-                            name="shortDesc"
-                            row={3}
-                            placeholder="Enter Short Description"
-                            value={shortDesc}
-                            onChange={(e) => {
-                                setShortDesc(e.target.value);
-                            }}
-                        />
-                    </Form.Group>
-                </Form>
-                <Modal.Footer className="d-flex justify-content-center flex-column">
-                    <Button
-                        variant="primary"
-                        type="submit"
-                        onClick={handleSubmit}
-                        disabled={isLoading}>
-                        {isLoading ? (
-                            <Spinner animation="border" size="sm" />
-                        ) : (
-                            'Update'
-                        )}
-                    </Button>
-                    {error && <Alert variant="danger">{error}</Alert>}
-                </Modal.Footer>
-            </Modal.Body>
+            <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}>
+                {({
+                    handleSubmit,
+                    handleChange,
+                    touched,
+                    values,
+                    errors,
+                    isSubmitting
+                }) => (
+                    <Form noValidate onSubmit={handleSubmit}>
+                        <Modal.Body>
+                            <NameField
+                                label="Page Name"
+                                placeholder="Enter Page Name"
+                                values={values}
+                                errors={errors}
+                                touched={touched}
+                                handleChange={handleChange}
+                            />
+                            <DescriptionField
+                                label="Description"
+                                placeholder="Enter a short description"
+                                values={values}
+                                errors={errors}
+                                touched={touched}
+                                handleChange={handleChange}
+                            />
+                        </Modal.Body>
+                        <Modal.Footer
+                            className={`${styles.modalFooter} justify-content-center`}>
+                            <Button
+                                className={styles.formBtn}
+                                variant="success"
+                                type="submit"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <Spinner animation="border" size="sm" />
+                                ) : (
+                                    'Update'
+                                )}
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                )}
+            </Formik>
         </Modal>
     );
 };

@@ -147,10 +147,27 @@ export const updatePageAsync =
         dispatch(intiateProcess());
         try {
             const bookDocRef = doc(db, 'books', bookId);
+            const pagesCollectionRef = collection(bookDocRef, 'pages');
             const pageDocRef = doc(bookDocRef, 'pages', pageId);
             const pageDoc = await getDoc(pageDocRef);
             if (pageDoc.exists()) {
                 const currentPage = pageDoc.data();
+                if (
+                    updatedFields.name &&
+                    updatedFields.name !== currentPage.name
+                ) {
+                    const pagesQuery = query(
+                        pagesCollectionRef,
+                        where('name', '==', updatedFields.name)
+                    );
+                    const querySnapshot = await getDocs(pagesQuery);
+                    if (!querySnapshot.empty) {
+                        throw new Error(
+                            `Page with name ${updatedFields.name} already exists.`
+                        );
+                    }
+                }
+
                 const updatedPage = Object.assign({}, currentPage, {
                     name: updatedFields.name ?? currentPage.name,
                     shortDesc: updatedFields.shortDesc ?? currentPage.shortDesc,
@@ -174,26 +191,44 @@ export const deletePageAsync = (bookId, pageId) => async (dispatch) => {
     dispatch(intiateProcess());
     try {
         const bookDocRef = doc(db, 'books', bookId);
-        const pageDocRef = doc(bookDocRef, 'pages', pageId);
-        const mdFileRef = ref(storage, `${bookId}/${pageId}.md`);
-        const pageDoc = await getDoc(pageDocRef);
-        if (pageDoc.exists()) {
-            const deletedPage = { ...pageDoc.data() };
-            const fileExists = await getMetadata(mdFileRef)
-                .then(() => true)
-                .catch((error) => {
-                    if (error.code === 'storage/object-not-found') {
-                        return false;
-                    }
-                    throw error;
-                });
+        const bookDoc = await getDoc(bookDocRef);
+        if (bookDoc.exists()) {
+            const links = bookDoc.data().links;
+            const pageDocRef = doc(bookDocRef, 'pages', pageId);
+            const mdFileRef = ref(storage, `${bookId}/${pageId}.md`);
+            const pageDoc = await getDoc(pageDocRef);
+            if (pageDoc.exists()) {
+                const deletedPage = { ...pageDoc.data() };
+                const fileExists = await getMetadata(mdFileRef)
+                    .then(() => true)
+                    .catch((error) => {
+                        if (error.code === 'storage/object-not-found') {
+                            return false;
+                        }
+                        throw error;
+                    });
 
-            if (fileExists) {
-                await deleteObject(mdFileRef);
+                if (fileExists) {
+                    await deleteObject(mdFileRef);
+                }
+                await deleteDoc(pageDocRef);
+                const newLinks = links.filter(
+                    (link) => link.source !== pageId && link.target !== pageId
+                );
+                await updateDoc(bookDocRef, {
+                    links: newLinks,
+                    updatedOn: serverTimestamp()
+                });
+                dispatch(deletePage(pageId));
+                return {
+                    type: deletePage.type,
+                    payload: { page: deletedPage, links: newLinks }
+                };
+            } else {
+                throw new Error('Page not exist!');
             }
-            await deleteDoc(pageDocRef);
-            dispatch(deletePage(pageId));
-            return { type: deletePage.type, payload: deletedPage };
+        } else {
+            throw new Error('Book not exist!');
         }
     } catch (error) {
         dispatch(responseFailure());

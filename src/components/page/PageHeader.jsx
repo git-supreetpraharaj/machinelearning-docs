@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import styles from './Page.module.css';
+import React from 'react';
 import { Button, ButtonGroup, Dropdown, Spinner, Stack } from 'react-bootstrap';
 import { BiCodeCurly, BiCommentDetail } from 'react-icons/bi';
 import {
@@ -20,6 +19,7 @@ import {
 } from 'react-icons/fa';
 import { MdHorizontalRule, MdTitle } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
+import styles from '../styles/Page.module.css';
 
 const PageHeader = ({
     user,

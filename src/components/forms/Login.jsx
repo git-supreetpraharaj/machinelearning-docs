@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Button, Form, Modal, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
 import { login, responseFailure } from '../../store/slices/authSlice';
+import styles from '../styles/Form.module.css';
+import { MdClose } from 'react-icons/md';
 
 const Login = ({ show, setShow }) => {
     const dispatch = useDispatch();
@@ -39,64 +41,108 @@ const Login = ({ show, setShow }) => {
     });
 
     return (
-        <Modal show={show} onHide={handleClose} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Login</Modal.Title>
+        <Modal
+            contentClassName={styles.formModal}
+            show={show}
+            onHide={handleClose}
+            centered
+        >
+            <Modal.Header className={styles.modalHeader}>
+                <Modal.Title>Sign In</Modal.Title>
+                <Button variant="dark" size="sm" onClick={handleClose}>
+                    <MdClose size={24} />
+                </Button>
             </Modal.Header>
-            <Modal.Body>
-                <Formik
-                    initialValues={{ email: '', password: '' }}
-                    validationSchema={validationSchema}
-                    onSubmit={handleSubmit}>
-                    {({ handleSubmit, handleChange, values, errors }) => (
-                        <Form noValidate onSubmit={handleSubmit}>
+
+            <Formik
+                initialValues={{ email: '', password: '' }}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+            >
+                {({ handleSubmit, handleChange, values, errors }) => (
+                    <Form noValidate onSubmit={handleSubmit}>
+                        <Modal.Body className={styles.modalBody}>
                             <Form.Group
                                 controlId="formBasicEmail"
-                                className="mt-3">
-                                <Form.Label>Email address</Form.Label>
+                                className={styles.formGroup}
+                            >
+                                <div className="d-flex justify-content-start">
+                                    <Form.Label className={styles.formLabel}>
+                                        Email
+                                    </Form.Label>
+                                </div>
                                 <Form.Control
+                                    className={`${styles.formField} ${
+                                        errors.email && styles.isInvalid
+                                    }`}
                                     type="email"
                                     name="email"
+                                    placeholder="example@domain.com"
                                     value={values.email}
                                     onChange={handleChange}
-                                    isInvalid={!!errors.email}
+                                    isInvalid={errors.email}
                                 />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors.email}
-                                </Form.Control.Feedback>
+                                {errors.email && (
+                                    <div className="w-100 d-flex justify-content-end">
+                                        <Form.Text className={styles.formText}>
+                                            {errors.email}
+                                        </Form.Text>
+                                    </div>
+                                )}
                             </Form.Group>
 
                             <Form.Group
                                 controlId="formBasicPassword"
-                                className="mt-3">
-                                <Form.Label>Password</Form.Label>
+                                className={styles.formGroup}
+                            >
+                                <div className="d-flex justify-content-start">
+                                    <Form.Label className={styles.formLabel}>
+                                        Password
+                                    </Form.Label>
+                                </div>
                                 <Form.Control
+                                    className={`${styles.formField} ${
+                                        errors.password && styles.isInvalid
+                                    }`}
                                     type="password"
                                     name="password"
+                                    placeholder="oooooooooo"
                                     value={values.password}
                                     onChange={handleChange}
-                                    isInvalid={!!errors.password}
+                                    isInvalid={errors.password}
                                 />
-                                <Form.Control.Feedback type="invalid">
-                                    {errors.password}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <Modal.Footer>
-                                <div className="d-flex justify-content-center mt-3">
-                                    <Button variant="primary" type="submit">
-                                        {loading ? 'Loading...' : 'Log in'}
-                                    </Button>
-                                </div>
-                                {error && (
-                                    <div className="d-flex justify-content-center mt-3 text-danger">
-                                        <span>{error}</span>
+                                {errors.password && (
+                                    <div className="w-100 d-flex justify-content-end">
+                                        <Form.Text className={styles.formText}>
+                                            {errors.password}
+                                        </Form.Text>
                                     </div>
                                 )}
-                            </Modal.Footer>
-                        </Form>
-                    )}
-                </Formik>
-            </Modal.Body>
+                            </Form.Group>
+                        </Modal.Body>
+                        <Modal.Footer className={styles.modalFooter}>
+                            {/* {error && (
+                                <div className="d-flex w-100 justify-content-center text-danger">
+                                    <span>{error}</span>
+                                </div>
+                            )} */}
+                            <div className="d-flex w-100 justify-content-center">
+                                <Button
+                                    className="w-25"
+                                    variant="success"
+                                    type="submit"
+                                >
+                                    {loading ? (
+                                        <Spinner animation="border" size="sm" />
+                                    ) : (
+                                        'Log in'
+                                    )}
+                                </Button>
+                            </div>
+                        </Modal.Footer>
+                    </Form>
+                )}
+            </Formik>
         </Modal>
     );
 };

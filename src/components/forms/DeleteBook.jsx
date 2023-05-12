@@ -5,6 +5,9 @@ import {
     deleteBookAsync,
     responseFailure
 } from '../../store/slices/booksSlice';
+import styles from '../styles/Form.module.css';
+import { MdClose } from 'react-icons/md';
+import { toast } from 'react-toastify';
 
 const DeleteBook = ({
     show,
@@ -16,11 +19,9 @@ const DeleteBook = ({
 }) => {
     const dispatch = useDispatch();
     const [isLoading, setLoading] = useState(false);
-    const [error, setError] = useState('');
 
     const handleClose = () => {
         setLoading(false);
-        setError('');
         setSelectedBook(null);
         setSelectedId(null);
         setShow(false);
@@ -32,8 +33,11 @@ const DeleteBook = ({
         dispatch(deleteBookAsync(bookId))
             .then((result) => {
                 if (result.type === responseFailure.type) {
-                    setError(result.payload);
+                    toast.error(result.payload);
                 } else {
+                    toast.success(
+                        `${result.payload.name} is deleleted successfully`
+                    );
                     handleClose();
                 }
             })
@@ -43,32 +47,39 @@ const DeleteBook = ({
     };
 
     return (
-        <Modal show={show} onHide={handleClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>Comfirm Delete</Modal.Title>
+        <Modal
+            show={show}
+            onHide={handleClose}
+            contentClassName={styles.formModal}>
+            <Modal.Header className={styles.modalHeader}>
+                <Modal.Title>Deleting {book.name}</Modal.Title>
+                <Button variant="dark" size="sm" onClick={handleClose}>
+                    <MdClose size={24} />
+                </Button>
             </Modal.Header>
             <Modal.Body>
                 Are you sure you want to delete {book.name}?
             </Modal.Body>
-            <Modal.Footer className="justify-content-center">
-                <div className="mx-2">
-                    <Button variant="secondary" onClick={handleClose}>
-                        Cancel
-                    </Button>
-                </div>
-                <div className="mx-2">
-                    <Button
-                        variant="danger"
-                        onClick={() => {
-                            handleConfirm();
-                        }}>
-                        {isLoading ? (
-                            <Spinner animation="border" size="sm" />
-                        ) : (
-                            'Delete'
-                        )}
-                    </Button>
-                </div>
+            <Modal.Footer
+                className={`${styles.modalFooter} justify-content-center`}>
+                <Button
+                    className="w-25 me-3"
+                    variant="secondary"
+                    onClick={handleClose}>
+                    Cancel
+                </Button>
+                <Button
+                    className="w-25"
+                    variant="danger"
+                    onClick={() => {
+                        handleConfirm();
+                    }}>
+                    {isLoading ? (
+                        <Spinner animation="border" size="sm" />
+                    ) : (
+                        'Delete'
+                    )}
+                </Button>
             </Modal.Footer>
         </Modal>
     );

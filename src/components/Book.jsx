@@ -5,20 +5,23 @@ import {
     fetchPagesAsync,
     resetPages,
     responseFailure
-} from '../../store/slices/pagesSlice';
-import { updateBookAsync } from '../../store/slices/booksSlice';
-import { Button } from 'react-bootstrap';
-import AddPage from '../forms/AddPage';
-import UpdatePage from '../forms/UpdatePage';
-import DeletePage from '../forms/DeletePage';
-import styles from './Book.module.css';
+} from '../store/slices/pagesSlice';
+import { updateBookAsync } from '../store/slices/booksSlice';
+import AddPage from './forms/AddPage';
+import UpdatePage from './forms/UpdatePage';
+import DeletePage from './forms/DeletePage';
+import styles from './styles/Book.module.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import { Tooltip } from 'react-tooltip';
 
-import { runBookNetGenerator } from '../../svgGenerator/bookNetGenerator';
-import Spinner from '../spinner/Spinner';
+import { runBookNetGenerator } from '../svgGenerator/bookNetGenerator';
+import Spinner from './Spinner';
+import { toast } from 'react-toastify';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/FirebaseSetup';
+import AddReference from './forms/AddReference';
 
-const Book = ({ query }) => {
+const Book = ({ searchQuery }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const svgContainerRef = useRef(null);
@@ -34,26 +37,50 @@ const Book = ({ query }) => {
     const [nodes, setNodes] = useState([]);
     const [links, setLinks] = useState([]);
     const [isEdit, setEdit] = useState(false);
-
+    const [book, setBook] = useState(null);
     const [selectedPage, setSelectedPage] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
     const [isLoading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showAddPage, setShowAddPage] = useState(false);
+    const [showAddReference, setShowAddReference] = useState(false);
     const [showUpdatePage, setShowUpdatePage] = useState(false);
-    const [showDeleteBook, setShowDeleteBook] = useState(false);
-    console.log('1', isLoading, nodes, links);
+    const [showDeletePage, setShowDeletePage] = useState(false);
     useEffect(() => {
-        console.log('3 use1', isLoading, nodes, links);
         setLoading(true);
         dispatch(fetchPagesAsync(bookId)).then((result) => {
             if (result.type === responseFailure.type) {
                 setError(result.payload);
                 setLoading(false);
             } else {
-                setNodes(result.payload);
-                setLinks(books[bookId].links);
-                setLoading(false);
+                const bookRef = doc(db, 'books', bookId);
+                const allNodes = [...result.payload];
+                getDoc(bookRef).then((doc) => {
+                    const bookDoc = doc.data();
+                    const referencePromises = bookDoc.references.map((ref) =>
+                        getDoc(ref).then((doc) => ({
+                            id: doc.id,
+                            refUrl:
+                                '/' +
+                                ref.path
+                                    .replace('books', '')
+                                    .replace('pages', '')
+                                    .split('/')
+                                    .filter((id) => id !== '')
+                                    .join('/'),
+                            ...doc.data()
+                        }))
+                    );
+                    Promise.all(referencePromises)
+                        .then((refData) => {
+                            refData.forEach((data) => allNodes.push(data));
+                            setBook({ id: doc.id, ...bookDoc });
+                            setNodes(allNodes);
+                            setLinks(books[bookId].links);
+                            setLoading(false);
+                        })
+                        .catch((error) => toast.error(error.message));
+                });
             }
         });
 
@@ -101,8 +128,9 @@ const Book = ({ query }) => {
                 setSelectedPage,
                 setSelectedId,
                 handleAddPageShow,
-                handleUpdateBookShow,
-                handleDeleteBookShow,
+                handleAddReferenceShow,
+                handleUpdatePageShow,
+                handleDeletePageShow,
                 navigate,
                 user,
                 handleRefreshPages
@@ -124,27 +152,54 @@ const Book = ({ query }) => {
         });
     }
 
-    const handleAddPageShow = () => {
-        setShowAddPage(true);
-    };
-    const handleUpdateBookShow = () => setShowUpdatePage(true);
-    const handleDeleteBookShow = () => setShowDeleteBook(true);
+    const handleAddPageShow = () => setShowAddPage(true);
+    const handleAddReferenceShow = () => setShowAddReference(true);
+    const handleUpdatePageShow = () => setShowUpdatePage(true);
+    const handleDeletePageShow = () => setShowDeletePage(true);
+
     const handleRefreshPages = () => {
         setLoading(true);
         dispatch(fetchPagesAsync(bookId)).then((result) => {
             if (result.type === responseFailure.type) {
                 setError(result.payload);
             } else {
-                setNodes(result.payload);
-                setLinks(books[bookId].links);
-                setLoading(false);
+                const bookRef = doc(db, 'books', bookId);
+                const allNodes = [...result.payload];
+                getDoc(bookRef).then((doc) => {
+                    const bookDoc = doc.data();
+                    const referencePromises = bookDoc.references.map((ref) =>
+                        getDoc(ref).then((doc) => ({
+                            id: doc.id,
+                            refUrl:
+                                '/' +
+                                ref.path
+                                    .replace('books', '')
+                                    .replace('pages', '')
+                                    .split('/')
+                                    .filter((id) => id !== '')
+                                    .join('/'),
+                            ...doc.data()
+                        }))
+                    );
+                    Promise.all(referencePromises)
+                        .then((refData) => {
+                            refData.forEach((data) => allNodes.push(data));
+                            setBook({ id: doc.id, ...bookDoc });
+                            setNodes(allNodes);
+                            setLinks(books[bookId].links);
+                            setLoading(false);
+                        })
+                        .catch((error) => toast.error(error.message));
+                });
             }
         });
     };
 
-    const saveNewLink = (newLinks) => {
+    const saveNewLink = (newLinks, type) => {
         dispatch(updateBookAsync(bookId, newLinks)).then((res) => {
-            console.log(res.payload);
+            toast.success(
+                `Link ${type === 'add' ? 'added' : 'deleted'} successfully`
+            );
         });
     };
 
@@ -158,11 +213,19 @@ const Book = ({ query }) => {
                 setShow={setShowAddPage}
                 bookId={bookId}
             />
+            <AddReference
+                show={showAddReference}
+                setShow={setShowAddReference}
+                book={book}
+                setBook={setBook}
+                nodes={nodes}
+                setNodes={setNodes}
+            />
             {selectedId && selectedPage && (
                 <UpdatePage
                     show={showUpdatePage}
                     setShow={setShowUpdatePage}
-                    bookId={bookId}
+                    book={book}
                     pageId={selectedId}
                     page={selectedPage}
                     setSelectedId={setSelectedId}
@@ -171,13 +234,17 @@ const Book = ({ query }) => {
             )}
             {selectedId && selectedPage && (
                 <DeletePage
-                    show={showDeleteBook}
-                    setShow={setShowUpdatePage}
-                    bookId={bookId}
+                    show={showDeletePage}
+                    setShow={setShowDeletePage}
+                    book={book}
+                    setBook={setBook}
                     pageId={selectedId}
                     page={selectedPage}
                     setSelectedId={setSelectedId}
                     setSelectedPage={setSelectedPage}
+                    setLinks={setLinks}
+                    nodes={nodes}
+                    setNodes={setNodes}
                 />
             )}
         </div>

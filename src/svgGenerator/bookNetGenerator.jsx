@@ -1,5 +1,6 @@
 import {
     forceCenter,
+    forceCollide,
     forceLink,
     forceManyBody,
     forceSimulation,
@@ -21,6 +22,7 @@ import { Button } from 'react-bootstrap';
 import { FaArrowLeft, FaCog, FaSave, FaSyncAlt } from 'react-icons/fa';
 import { getAgoTime } from '../utils/utilities';
 import { MdEditDocument, MdPolyline } from 'react-icons/md';
+import { createBackground } from './background';
 
 /**
  *
@@ -36,8 +38,8 @@ import { MdEditDocument, MdPolyline } from 'react-icons/md';
  * @param {Function} setSelectedPage - A function to set the selected page.
  * @param {Function} setSelectedId - A function to set the ID of the selected page.
  * @param {Function} handleAddPageShow - A function to handle the showing of the add page modal.
- * @param {Function} handleUpdateBookShow - A function to handle the showing of the update book modal.
- * @param {Function} handleDeleteBookShow - A function to handle the showing of the delete book modal.
+ * @param {Function} handleUpdatePageShow - A function to handle the showing of the update page modal.
+ * @param {Function} handleDeletePageShow - A function to handle the showing of the delete page modal.
  * @param {Function} navigate - A function to handle navigation to different pages.
  * @param {Object} user - An object containing information about the current user.
  * @param {Function} handleRefreshPages - A function to refresh the pages.
@@ -53,8 +55,9 @@ export const runBookNetGenerator = ({
     setSelectedPage,
     setSelectedId,
     handleAddPageShow,
-    handleUpdateBookShow,
-    handleDeleteBookShow,
+    handleAddReferenceShow,
+    handleUpdatePageShow,
+    handleDeletePageShow,
     navigate,
     user,
     handleRefreshPages
@@ -74,9 +77,10 @@ export const runBookNetGenerator = ({
             'link',
             forceLink(linksData)
                 .id((d) => d.id)
-                .distance(230)
+                .distance(220)
         )
-        .force('charge', forceManyBody().strength(-350))
+        .force('collide', forceCollide().radius(100).iterations(4))
+        .force('charge', forceManyBody().strength(-50))
         .force('center', forceCenter(width / 2, height / 2))
         .on('tick', ticked);
 
@@ -86,36 +90,7 @@ export const runBookNetGenerator = ({
         .attr('width', width)
         .attr('height', height);
 
-    //svg background: pattern
-    const pattern = svg
-        .append('defs')
-        .append('pattern')
-        .attr('id', 'dots')
-        .attr('patternUnits', 'userSpaceOnUse')
-        .attr('width', 24)
-        .attr('height', 24);
-    pattern
-        .append('circle')
-        .attr('cx', 4)
-        .attr('cy', 4)
-        .attr('r', 1)
-        .attr('fill', 'black');
-    pattern
-        .append('circle')
-        .attr('cx', 16)
-        .attr('cy', 16)
-        .attr('r', 1)
-        .attr('fill', 'black');
-    svg.append('rect')
-        .attr('x', 0)
-        .attr('width', width)
-        .attr('height', height)
-        .attr('fill', 'grey');
-    svg.append('rect')
-        .attr('x', 0)
-        .attr('width', width)
-        .attr('height', height)
-        .attr('fill', 'url(#dots)');
+    createBackground(svg, width, height);
 
     const mainGroup = svg.append('g').attr('class', 'mainGroup');
 
@@ -158,6 +133,14 @@ export const runBookNetGenerator = ({
         .attr('height', (d) => d.height)
         .attr('rx', 5)
         .style('filter', 'url(#drop-shadow)');
+    nodeBox
+        .selectAll('rect')
+        .filter((d) => d.refUrl)
+        .attr('fill', 'silver');
+    nodeBox
+        .selectAll('rect')
+        .filter((d) => d.cover)
+        .attr('stroke-width', '5px');
     nodeBox
         .append('line')
         .attr('x1', (d) => -d.width / 2)
@@ -399,6 +382,57 @@ export const runBookNetGenerator = ({
                 handleAddPageShow();
             });
 
+        const newRef = svg
+            .append('g')
+            .attr('class', styles.newNode)
+            .attr('transform', `translate(${width - 130}, 190)`)
+            .attr('data-tooltip-id', 'my-tooltip')
+            .attr('data-tooltip-content', 'Add New Reference')
+            .attr('data-tooltip-place', 'bottom')
+            .attr('data-tooltip-float', true)
+            .attr('data-tooltip-offset', 50);
+
+        newRef.append('circle').attr('r', 50);
+
+        newRef
+            .append('circle')
+            .attr('r', 25)
+            .attr('stroke-width', 2)
+            .attr('opacity', 1)
+            .attr('stroke-dasharray', '5 5')
+            .attr('fill', 'none');
+        newRef
+            .append('text')
+            .attr('y', -6)
+            .attr('fill', 'black')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('font-size', '50px')
+            .attr('cursor', 'pointer')
+            .text('+');
+        newRef
+            .on('mouseover', () => {
+                newRef
+                    .transition()
+                    .duration(200)
+                    .attr(
+                        'transform',
+                        `translate(${width - 130}, 190) scale(1.2)`
+                    );
+            })
+            .on('mouseout', () => {
+                newRef
+                    .transition()
+                    .duration(200)
+                    .attr(
+                        'transform',
+                        `translate(${width - 130}, 190) scale(1.1)`
+                    );
+            })
+            .on('click', () => {
+                handleAddReferenceShow();
+            });
+
         svg.on('click', (e) => handleSvgClicked(e, styles));
 
         if (isEdit === 'link') {
@@ -471,7 +505,7 @@ export const runBookNetGenerator = ({
                             source: link.source.id,
                             target: link.target.id
                         }));
-                    saveNewLink({ links: newLinksData });
+                    saveNewLink({ links: newLinksData }, 'delete');
                     setLinks(newLinksData);
                 });
             });
@@ -575,7 +609,7 @@ export const runBookNetGenerator = ({
                         const newLink = { source: sourceId, target: targetId };
                         if (!contains) {
                             newLinksData.push(newLink);
-                            saveNewLink({ links: newLinksData });
+                            saveNewLink({ links: newLinksData }, 'add');
                             setLinks(newLinksData);
                         }
                     }
@@ -587,22 +621,22 @@ export const runBookNetGenerator = ({
             });
         } else {
             node.on('click', (e, d) => {
-                handleNodeClicked(
+                handleNodeClicked({
                     e,
                     d,
                     styles,
-                    data.nodes,
+                    nodes: data.nodes,
                     setSelectedId,
                     setSelectedPage,
-                    handleUpdateBookShow,
-                    handleDeleteBookShow,
+                    handleUpdatePageShow,
+                    handleDeletePageShow,
                     navigate
-                );
+                });
             });
         }
     } else {
         node.on('click', (e, d) => {
-            navigate(`${d.id}?view=preview`);
+            d.refUrl ? navigate(d.refUrl) : navigate(`${d.id}?view=preview`);
         });
     }
 

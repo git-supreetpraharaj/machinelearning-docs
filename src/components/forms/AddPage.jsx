@@ -1,37 +1,36 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { Button, Form, Modal, Spinner, Alert } from 'react-bootstrap';
 import { useDispatch } from 'react-redux';
 import { addPageAsync, responseFailure } from '../../store/slices/pagesSlice';
+import NameField from './fields/NameField';
+import * as Yup from 'yup';
+import DescriptionField from './fields/DescriptionField';
+import { toast } from 'react-toastify';
+import { Formik } from 'formik';
+import styles from '../styles/Form.module.css';
+import { MdClose } from 'react-icons/md';
 
 const AddPage = ({ show, setShow, bookId }) => {
     const dispatch = useDispatch();
-    const formRef = useRef(null);
-    const [isLoading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+
     const handleClose = () => {
-        setLoading(false);
-        setError('');
         setShow(false);
     };
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-
-        setLoading(true);
-        const formData = new FormData(formRef.current);
-        const pageName = formData.get('name');
-        const shortDesc = formData.get('shortDesc');
-
+    const handleSubmit = (values, { setSubmitting }) => {
         const page = {
-            name: pageName,
-            shortDesc: shortDesc
+            name: values.name,
+            shortDesc: values.shortDesc
         };
 
         dispatch(addPageAsync(bookId, page))
             .then((result) => {
                 if (result.type === responseFailure.type) {
-                    setError(result.payload);
+                    toast.error(result.payload);
                 } else {
+                    toast.success(
+                        `${result.payload.name} is added successfully`
+                    );
                     handleClose();
                 }
             })
@@ -40,52 +39,84 @@ const AddPage = ({ show, setShow, bookId }) => {
             });
     };
 
-    return (
-        <Modal show={show} onHide={handleClose} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Create New Page</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form ref={formRef} onSubmit={handleSubmit}>
-                    <Form.Group
-                        className="mb-3"
-                        controlId="newPageForm.pageName">
-                        <Form.Label>Name</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="name"
-                            placeholder="Enter Page Name"
-                        />
-                    </Form.Group>
+    const validationSchema = Yup.object().shape({
+        name: Yup.string()
+            .min(5, 'Name must be at least 5 characters')
+            .matches(
+                /^[\w\s'"-]+$/,
+                'Name can only contain letters, numbers, underscores, hyphens, single quotes, double quotes and spaces'
+            )
+            .required('Name is required'),
+        description: Yup.string().notRequired()
+    });
 
-                    <Form.Group
-                        className="mb-3"
-                        controlId="newPageForm.shortDesc">
-                        <Form.Label>Short Description</Form.Label>
-                        <Form.Control
-                            as="textarea"
-                            name="shortDesc"
-                            row={5}
-                            style={{ height: '100px' }}
-                            placeholder="Enter Short Description"
-                        />
-                    </Form.Group>
-                </Form>
-                <Modal.Footer className="d-flex justify-content-center flex-column">
-                    <Button
-                        variant="primary"
-                        type="submit"
-                        onClick={handleSubmit}
-                        disabled={isLoading}>
-                        {isLoading ? (
-                            <Spinner animation="border" size="sm" />
-                        ) : (
-                            'Create'
-                        )}
-                    </Button>
-                    {error && <Alert variant="danger">{error}</Alert>}
-                </Modal.Footer>
-            </Modal.Body>
+    const initialValues = {
+        name: '',
+        shortDesc: ''
+    };
+
+    return (
+        <Modal
+            contentClassName={styles.formModal}
+            show={show}
+            onHide={handleClose}
+            centered>
+            <Modal.Header className={styles.modalHeader}>
+                <Modal.Title>Add New Page</Modal.Title>
+                <Button variant="dark" size="sm" onClick={handleClose}>
+                    <MdClose size={24} />
+                </Button>
+            </Modal.Header>
+            <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}>
+                {({
+                    handleSubmit,
+                    handleChange,
+                    touched,
+                    values,
+                    errors,
+                    isSubmitting
+                }) => (
+                    <Form noValidate onSubmit={handleSubmit}>
+                        <Modal.Body>
+                            <NameField
+                                label="Page Name"
+                                placeholder="Enter Page Name"
+                                values={values}
+                                errors={errors}
+                                touched={touched}
+                                handleChange={handleChange}
+                            />
+                            <DescriptionField
+                                label="Description"
+                                placeholder="Enter a short description"
+                                values={values}
+                                errors={errors}
+                                touched={touched}
+                                handleChange={handleChange}
+                            />
+                        </Modal.Body>
+
+                        <Modal.Footer
+                            className={`${styles.modalFooter} justify-content-center`}>
+                            <Button
+                                className={styles.formBtn}
+                                variant="success"
+                                type="submit"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <Spinner animation="border" size="sm" />
+                                ) : (
+                                    'Add'
+                                )}
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                )}
+            </Formik>
         </Modal>
     );
 };
